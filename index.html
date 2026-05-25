@@ -61,10 +61,15 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+
+  <!-- 引入相容性最高的 Firebase 10.8 UMD 全域套件 (防止 Module 載入崩潰) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe">
 
-  <!-- 頂部滿版導航欄 -->
+  <!-- 頂部滿版導航欄（不留白） -->
   <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full">
     <div class="w-full px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -77,9 +82,9 @@
           <div>
             <div class="flex items-center gap-2">
               <h1 class="fluid-title tracking-wide text-white leading-none">頤寧安全用藥</h1>
-              <span id="cloudStatusBadge" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-black">載入中...</span>
+              <span id="cloudStatusBadge" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-black">讀取中...</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1" id="boxTypeSubtext">雲端藥盒系統</p>
+            <p class="text-xs text-slate-400 mt-1" id="boxTypeSubtext">智慧雲端藥盒</p>
           </div>
         </div>
         
@@ -101,11 +106,11 @@
         <button id="btnWeekView" onclick="switchView('week')" class="flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           🗓️ 一週
         </button>
-        <!-- 管理員專屬頁籤 (動態顯示) -->
+        <!-- 管理員專屬頁籤 -->
         <button id="btnAdminView" onclick="switchView('admin')" class="hidden flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           👑 管理中心
         </button>
-        <button id="btnEditView" onclick="requestAccessToSettings()" class="hidden flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button id="btnEditView" onclick="switchView('edit')" class="hidden flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           ⚙️ 設定
         </button>
       </nav>
@@ -116,7 +121,7 @@
   <main class="flex-grow w-full px-2 sm:px-4 py-4 space-y-4">
 
     <!-- 雲端代碼提示橫幅 (僅管理員顯示) -->
-    <div id="cloudBoxNotice" class="hidden bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+    <div id="cloudBoxNotice" class="hidden bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm w-full">
       <div class="flex items-center gap-3">
         <span class="text-2xl">👑</span>
         <div>
@@ -125,14 +130,15 @@
         </div>
       </div>
       <div class="flex gap-2">
-        <button onclick="switchView('admin')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all">
+        <button onclick="switchView('admin')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all whitespace-nowrap">
           進入管理中心 ➔
         </button>
       </div>
     </div>
 
-    <!-- 視圖1: 一日即時監控畫面 -->
+    <!-- 視圖1: 一日即時監控畫面 (主畫面) -->
     <div id="dayView" class="space-y-4 w-full">
+      
       <!-- 即時時鐘與時段提示面板 -->
       <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden w-full">
         <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
@@ -152,8 +158,8 @@
       <!-- 核心監控三部曲面板 (當前、前一階段、後一階段) -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         
-        <!-- 【左側卡片】前一階段用藥 -->
-        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200/80 shadow-sm flex flex-col justify-between">
+        <!-- 【左側卡片】前一階段用藥 (過期追溯) -->
+        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
               <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2">
@@ -162,8 +168,8 @@
               <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
             </div>
             <div class="text-slate-700 space-y-1.5 mb-3">
-              <div class="fluid-meta font-black text-brand-700">時段：<span id="prevSlotName">--</span></div>
-              <div class="fluid-meta font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block" id="prevDoseElapsed">已過去：--</div>
+              <div class="fluid-meta font-black text-brand-700 font-bold">時段：<span id="prevSlotName">--</span></div>
+              <div class="fluid-meta font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-bold" id="prevDoseElapsed">已過去：--</div>
             </div>
             <div id="prevMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
               <!-- 動態生成上期藥品 -->
@@ -202,7 +208,7 @@
         </div>
 
         <!-- 【右側卡片】後一階段用藥 -->
-        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200/80 shadow-sm flex flex-col justify-between">
+        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
               <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2">
@@ -211,8 +217,8 @@
               <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
             </div>
             <div class="text-slate-700 space-y-1.5 mb-3">
-              <div class="fluid-meta font-black text-brand-700">時段：<span id="nextSlotName">--</span></div>
-              <div class="fluid-meta font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block" id="nextDoseTargetTime">預計還有：--</div>
+              <div class="fluid-meta font-black text-brand-700 font-bold">時段：<span id="nextSlotName">--</span></div>
+              <div class="fluid-meta font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-bold" id="nextDoseTargetTime">預計還有：--</div>
             </div>
             <div id="nextMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
               <!-- 動態生成下期藥品 -->
@@ -409,23 +415,19 @@
     </div>
   </div>
 
-  <!-- Toast 訊息浮窗 -->
-  <div id="toastMessage" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2 border border-white/10">
-    <span id="toastIcon">💡</span>
-    <span id="toastText">訊息</span>
+  <!-- ⚙️ 頁尾管理端快速入口 (僅親友模式時自動隱藏) -->
+  <div id="adminFooterEntry" class="w-full flex justify-center py-4 bg-slate-200 border-t border-slate-300">
+    <button onclick="switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all">
+      ⚙️ 進入管理員模式
+    </button>
   </div>
 
-  <footer class="bg-slate-200 border-t border-slate-300 py-6 text-center text-xs text-slate-500 mt-auto w-full">
+  <footer class="bg-slate-300 py-6 text-center text-xs text-slate-600 w-full mt-auto">
     <p>© 2026 頤寧安全用藥監控系統. 專為高齡友善及高效率藥物安排設計.</p>
-    <p class="mt-1 text-[11px] text-slate-400">本軟體數據加密保存在本機與雲端 Firestore 資料庫.</p>
+    <p class="mt-1 text-[11px] text-slate-500">本軟體數據加密保存在本機與雲端 Firestore 資料庫.</p>
   </footer>
 
-  <!-- Firebase SDK 與 雲端多用戶 Mode 2 控制中心 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+  <script>
     // 預設基本用藥規劃數據 (陳大朋 V3版)
     const defaultSchedule = [
       {
@@ -465,7 +467,7 @@
         time: "22:00",
         description: "就寢前30分鐘",
         items: [
-          { id: "item-4-1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "1 顆", effect: "長效型 Statin 藥物，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定睡前吃效果佳，不易遺忘。" },
+          { id: "item-4-1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "1 顆", effect: "Atorvastatin 長效型藥物，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定睡前吃效果佳，不易遺忘。" },
           { id: "item-4-2", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "幫助補鈣。鈣離子具穩定神經效果，有助睡眠。", sideEffect: "與早晨魚油間隔達12小時，可避免皂化作用，吸收率達最大。" }
         ]
       },
@@ -510,7 +512,7 @@
     // 全域變數狀態
     window.appState = {
       username: "陳大朋",
-      password: "123456", // 管理員安全解鎖密碼
+      password: "123456", 
       schedule: [],
       weeklyLogs: {}, 
       takenLogs: {},
@@ -527,7 +529,7 @@
     window.tempInputPass = "";
     window.postPasswordSuccessCallback = null;
 
-    // 解析 URL 與多用戶設定
+    // 解析 URL
     const urlParams = new URLSearchParams(window.location.search);
     let boxId = urlParams.get('box') || urlParams.get('id');
     const isAdminUrl = urlParams.get('admin') === 'true';
@@ -537,7 +539,6 @@
     }
 
     if (!boxId) {
-      // 若是管理員且沒指定 boxId，預設使用自己的藥盒 (admin_self)
       boxId = window.adminData.isAdminMode ? 'admin_self' : (localStorage.getItem('yining_current_box_id') || 'demo');
     } else {
       localStorage.setItem('yining_current_box_id', boxId);
@@ -545,81 +546,67 @@
     
     document.getElementById('currentBoxIdDisplay').textContent = `藥盒代碼: ${boxId}`;
 
-    // Firebase 配置初始化
-    let firebaseConfig = {};
-    if (typeof __firebase_config !== 'undefined') {
-      firebaseConfig = JSON.parse(__firebase_config);
-    } else {
-      firebaseConfig = {
-        apiKey: "",
-        authDomain: "yining-med.firebaseapp.com",
-        projectId: "yining-med",
-        storageBucket: "yining-med.appspot.com",
-        messagingSenderId: "1029384756",
-        appId: "1:1029384756:web:abcd1234efgh"
-      };
-    }
+    // Firebase 配置與防阻擋安全載入
+    let firebaseConfig = {
+      apiKey: "",
+      authDomain: "yining-med.firebaseapp.com",
+      projectId: "yining-med",
+      storageBucket: "yining-med.appspot.com",
+      messagingSenderId: "1029384756",
+      appId: "1:1029384756:web:abcd1234efgh"
+    };
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'yining-med-tracker';
+    const appId = 'yining-med-tracker';
     let db = null;
     let auth = null;
-    let isOfflineMode = false;
+    let isOfflineMode = true; // 預設為離線防卡死，隨後嘗試雲端
 
-    // 初始化 Firebase 連線
-    try {
-      const app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-    } catch (e) {
-      isOfflineMode = true;
-      document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
-      document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
-      loadOfflineState();
-      initClock();
-      renderApp();
-      setupModeUI();
+    // 初始化 Firebase (若被攔截阻擋或不存在將自動跳入離線運行模式)
+    if (typeof firebase !== 'undefined') {
+      try {
+        const app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        isOfflineMode = false;
+      } catch (e) {
+        console.warn("雲端庫連線不全，轉入離線防災模式", e);
+        isOfflineMode = true;
+      }
     }
 
-    // 載入應用程式啟動流程
-    window.addEventListener('load', async () => {
-      if (isOfflineMode) return;
-      // Rule 3: Auth Before Queries
-      await initAuth();
-    });
-
-    // 匿名登入 (Rule 3)
-    async function initAuth() {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (e) {
-        isOfflineMode = true;
+    // 啟動入口
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (isOfflineMode) {
+        document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
         loadOfflineState();
         initClock();
         renderApp();
         setupModeUI();
-        return;
+      } else {
+        await initAuth();
       }
+    });
 
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          document.getElementById('cloudStatusBadge').textContent = "雲端即時同步";
-          document.getElementById('cloudStatusBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
-          setupFirestoreRealtimeSync();
-          setupAdminIndexSync();
-          initClock();
-          setupModeUI();
-        } else {
-          isOfflineMode = true;
-          loadOfflineState();
-          initClock();
-          renderApp();
-          setupModeUI();
-        }
-      });
+    async function initAuth() {
+      try {
+        await auth.signInAnonymously();
+        document.getElementById('cloudStatusBadge').textContent = "雲端即時同步";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
+        setupFirestoreRealtimeSync();
+        setupAdminIndexSync();
+        initClock();
+        setupModeUI();
+      } catch (e) {
+        console.warn("匿名認證失敗，轉入離線防災模式", e);
+        isOfflineMode = true;
+        document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+        loadOfflineState();
+        initClock();
+        renderApp();
+        setupModeUI();
+      }
     }
 
     // 依模式載入/顯隱 UI 控制
@@ -630,29 +617,44 @@
       const boxType = document.getElementById('boxTypeSubtext');
       const roleSuffix = document.getElementById('userRoleSuffix');
       const resetBtn = document.getElementById('resetWeeklyLogBtn');
+      const footerEntry = document.getElementById('adminFooterEntry');
 
-      if (window.adminData.isAdminMode) {
-        // 管理員模式：顯示設定、管理、提示橫幅
-        notice.classList.remove('hidden');
-        btnAdmin.classList.remove('hidden');
-        btnEdit.classList.remove('hidden');
-        boxType.textContent = "管理員主控台";
-        roleSuffix.textContent = "（管理中）";
-        resetBtn.classList.remove('hidden');
-      } else {
-        // 親友模式：隱藏所有設定與管理，確保專注打卡
+      // 判斷是否為親友模式 (網址中含有 boxId，且沒有管理員標記)
+      const isRelativeOnly = (boxId !== 'admin_self' && boxId !== 'demo') && !window.adminData.isAdminMode;
+
+      if (isRelativeOnly) {
+        // 親友防窺防修改模式：完全隱藏管理登入與編輯設定功能
         notice.classList.add('hidden');
         btnAdmin.classList.add('hidden');
         btnEdit.classList.add('hidden');
+        footerEntry.classList.add('hidden'); // 入口徹底不見！
         boxType.textContent = "獨立專屬雲端藥盒";
         roleSuffix.textContent = "的藥包";
-        resetBtn.classList.add('hidden'); // 親友無法隨便歸零，必須由管理員處理
+        resetBtn.classList.add('hidden');
+      } else {
+        // 管理員或演示模式：允許手動解鎖
+        footerEntry.classList.remove('hidden');
+        if (window.adminData.isAdminMode) {
+          notice.classList.remove('hidden');
+          btnAdmin.classList.remove('hidden');
+          btnEdit.classList.remove('hidden');
+          boxType.textContent = "管理員主控台";
+          roleSuffix.textContent = "（管理中）";
+          resetBtn.classList.remove('hidden');
+        } else {
+          notice.classList.add('hidden');
+          btnAdmin.classList.add('hidden');
+          btnEdit.classList.add('hidden');
+          boxType.textContent = "智慧雲端藥盒";
+          roleSuffix.textContent = "的藥包";
+          resetBtn.classList.add('hidden');
+        }
       }
     }
 
     // 本機暫存讀取備災
     function loadOfflineState() {
-      const saved = localStorage.getItem(`yining_med_offline_box_${boxId}`);
+      const saved = localStorage.getItem(`yining_med_offline_box_v3_${boxId}`);
       if (saved) {
         try {
           window.appState = JSON.parse(saved);
@@ -663,7 +665,7 @@
         resetOfflineDefault();
       }
       
-      const savedIndex = localStorage.getItem('yining_med_offline_index');
+      const savedIndex = localStorage.getItem('yining_med_offline_index_v3');
       if (savedIndex) {
         try {
           window.adminData.managedBoxes = JSON.parse(savedIndex);
@@ -672,7 +674,7 @@
     }
 
     function resetOfflineDefault() {
-      window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "親友用藥";
+      window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "陳大朋";
       window.appState.password = "123456";
       window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
       window.appState.weeklyLogs = {};
@@ -681,18 +683,17 @@
     }
 
     function saveOfflineState() {
-      localStorage.setItem(`yining_med_offline_box_${boxId}`, JSON.stringify(window.appState));
-      localStorage.setItem('yining_med_offline_index', JSON.stringify(window.adminData.managedBoxes));
+      localStorage.setItem(`yining_med_offline_box_v3_${boxId}`, JSON.stringify(window.appState));
+      localStorage.setItem('yining_med_offline_index_v3', JSON.stringify(window.adminData.managedBoxes));
     }
 
-    // Rule 1: 嚴格路徑綁定 + Rule 2: 絕無複雜複合查詢
     // 雲端即時監聽與自動防護 (用藥與打卡資料)
     function setupFirestoreRealtimeSync() {
-      if (!auth.currentUser) return;
-      const boxDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'pillboxConfigs', boxId);
+      if (isOfflineMode) return;
+      const boxDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(boxId);
 
-      onSnapshot(boxDocRef, (docSnap) => {
-        if (docSnap.exists()) {
+      boxDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
           const cloudData = docSnap.data();
           window.appState.username = cloudData.username || "親友用藥";
           window.appState.password = cloudData.password || "123456";
@@ -703,7 +704,8 @@
           calculateTimesAndReminders();
         } else {
           // 初始化雲端資料
-          window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "親友用藥";
+          window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "陳大朋";
+          window.appState.password = "123456";
           window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
           saveCloudState();
         }
@@ -715,18 +717,17 @@
       });
     }
 
-    // 監聽管理員對應的藥盒索引 (Rule 1)
+    // 監聽管理員對應的藥盒索引
     function setupAdminIndexSync() {
-      if (!auth.currentUser) return;
-      const indexDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'pillboxConfigs', 'index');
+      if (isOfflineMode) return;
+      const indexDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc('index');
 
-      onSnapshot(indexDocRef, (docSnap) => {
-        if (docSnap.exists()) {
+      indexDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
           const indexData = docSnap.data();
           window.adminData.managedBoxes = indexData.boxes || { 'admin_self': '我自己的藥盒' };
           renderRelativesList();
         } else {
-          // 初始化索引
           saveAdminIndex({ 'admin_self': '我自己的藥盒' });
         }
       });
@@ -734,9 +735,9 @@
 
     async function saveAdminIndex(newBoxes) {
       if (isOfflineMode) return;
-      const indexDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'pillboxConfigs', 'index');
+      const indexDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc('index');
       try {
-        await setDoc(indexDocRef, { boxes: newBoxes });
+        await indexDocRef.set({ boxes: newBoxes });
       } catch (e) {
         console.error("更新索引失敗: ", e);
       }
@@ -748,10 +749,9 @@
         saveOfflineState();
         return;
       }
-      if (!auth.currentUser) return;
-      const boxDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'pillboxConfigs', boxId);
+      const boxDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(boxId);
       try {
-        await setDoc(boxDocRef, {
+        await boxDocRef.set({
           username: window.appState.username,
           password: window.appState.password,
           schedule: window.appState.schedule,
@@ -792,10 +792,10 @@
       window.adminData.managedBoxes[rBoxId] = rName;
       await saveAdminIndex(window.adminData.managedBoxes);
 
-      // 建立對應藥盒配置 (Rule 1)
+      // 建立對應藥盒配置
       if (!isOfflineMode) {
-        const boxDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'pillboxConfigs', rBoxId);
-        await setDoc(boxDocRef, {
+        const boxDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(rBoxId);
+        await boxDocRef.set({
           username: rName,
           password: window.appState.password,
           schedule: JSON.parse(JSON.stringify(defaultSchedule)),
@@ -819,28 +819,27 @@
       const currentUrl = new URL(window.location.href);
 
       Object.entries(window.adminData.managedBoxes).forEach(([rBoxId, rName]) => {
-        // 親友專屬服藥連結 (僅附帶 boxId)
         const relativeUrl = `${currentUrl.origin}${currentUrl.pathname}?box=${rBoxId}`;
         const isSelf = rBoxId === boxId;
 
         html += `
-          <div class="bg-white p-5 rounded-2xl border ${isSelf ? 'border-brand-500 ring-2 ring-brand-100' : 'border-slate-200'} shadow-sm flex flex-col justify-between space-y-3">
+          <div class="bg-white p-5 rounded-2xl border-2 ${isSelf ? 'border-brand-500 ring-4 ring-brand-100' : 'border-slate-200'} shadow-sm flex flex-col justify-between space-y-3">
             <div class="flex justify-between items-start">
               <div>
                 <span class="fluid-subtitle font-black text-slate-800">${rName}</span>
                 <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono block mt-1">代碼: ${rBoxId}</span>
               </div>
               <div>
-                ${isSelf ? '<span class="text-xs bg-brand-50 text-brand-700 px-2 py-1 rounded-md font-black border border-brand-200">正在編輯</span>' : ''}
+                ${isSelf ? '<span class="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md font-black border border-emerald-200">正在編輯</span>' : ''}
               </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="switchActiveEditingBox('${rBoxId}')" class="h-10 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs rounded-xl transition-all">
-                ⚙️ 設定與編輯藥品
+              <button onclick="switchActiveEditingBox('${rBoxId}')" class="h-12 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm rounded-xl transition-all">
+                ⚙️ 編輯規劃
               </button>
-              <button onclick="copyRelativeShareLink('${rBoxId}')" class="h-10 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-xs rounded-xl transition-all">
-                🔗 複製親友專用連結
+              <button onclick="copyRelativeShareLink('${rBoxId}')" class="h-12 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-xs rounded-xl transition-all">
+                🔗 複製分享連結
               </button>
             </div>
             
@@ -889,7 +888,6 @@
         await saveAdminIndex(window.adminData.managedBoxes);
         showToast(`🗑️ 已移除 ${rName} 的藥盒。`);
         
-        // 若剛好在編輯已移除的，切換回自己
         if (boxId === targetBoxId) {
           switchActiveEditingBox('admin_self');
         } else {
@@ -910,7 +908,6 @@
         showToast("⭐ 範本已成功載入至編輯區，點擊下方「儲存修改並套用」即可生效！");
       }
     };
-
 
     // ================= 核心計算與打卡系統 =================
 
@@ -986,7 +983,7 @@
         const isTaken = window.appState.takenLogs[todayStr]?.[slot.id];
         
         html += `
-          <div class="p-4 rounded-2xl border ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
+          <div class="p-4 rounded-2xl border-2 ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
             <div class="flex justify-between items-start">
               <div>
                 <span class="fluid-meta font-black text-slate-800">${slot.name}</span>
@@ -1067,7 +1064,6 @@
     }
 
     window.toggleWeeklyDose = function(dateStr, slotId) {
-      // 僅限管理員模式下可以更正或打卡他人藥盒，防親友亂點
       if (!window.adminData.isAdminMode) {
         showToast("⚠️ 服藥紀錄僅限當下時段打卡，修改歷史請洽管理員。", "warning");
         return;
@@ -1193,7 +1189,6 @@
       if (viewName === 'edit') {
         requestAccessToSettings();
       } else if (viewName === 'admin') {
-        // 管理中心也防手抖誤觸加密
         if (window.appState.isUnlocked) {
           switchViewDirectly('admin');
         } else {
@@ -1392,7 +1387,7 @@
       saveCloudState();
       renderApp();
       calculateTimesAndReminders();
-      showToast("💾 用藥規劃設定已儲存並同步至雲端！");
+      showToast("💾 用藥規劃設定已儲存並同步！");
       switchView('day');
     };
 
