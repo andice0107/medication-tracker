@@ -35,10 +35,11 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
+      /* 液態無障礙大字體：隨寬窄螢幕自動調整，清晰易讀但不極端巨大 */
       --fluid-title: clamp(1.4rem, 4vw, 2.2rem);
-      --fluid-subtitle: clamp(1rem, 2.5vw, 1.4rem);
-      --fluid-body: clamp(1.1rem, 2.2vw, 1.35rem);
-      --fluid-meta: clamp(0.95rem, 1.8vw, 1.15rem);
+      --fluid-subtitle: clamp(1.1rem, 2.8vw, 1.5rem);
+      --fluid-body: clamp(1.15rem, 2.3vw, 1.4rem);
+      --fluid-meta: clamp(1rem, 2vw, 1.2rem);
     }
 
     body {
@@ -69,7 +70,7 @@
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe">
 
-  <!-- 頂部滿版導航欄（不留白） -->
+  <!-- 頂部滿版導航欄（左右不留白） -->
   <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full">
     <div class="w-full px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -146,7 +147,7 @@
           <div>
             <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">即時監控中</span>
             <div class="text-4xl sm:text-5xl font-black mt-2 tracking-tight" id="liveClock">00:00:00</div>
-            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate">2026年5月25日 星期一</div>
+            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate font-bold">2026年5月25日 星期一</div>
           </div>
           <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-3 md:pt-0">
             <span class="fluid-meta text-slate-300 block font-bold">⏱️ 距離下一個時段還要：</span>
@@ -168,8 +169,8 @@
               <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
             </div>
             <div class="text-slate-700 space-y-1.5 mb-3">
-              <div class="fluid-meta font-black text-brand-700 font-bold">時段：<span id="prevSlotName">--</span></div>
-              <div class="fluid-meta font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-bold" id="prevDoseElapsed">已過去：--</div>
+              <div class="fluid-meta font-bold text-brand-700">時段：<span id="prevSlotName" class="font-black">--</span></div>
+              <div class="fluid-meta text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-black" id="prevDoseElapsed">已過去：--</div>
             </div>
             <div id="prevMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
               <!-- 動態生成上期藥品 -->
@@ -217,8 +218,8 @@
               <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
             </div>
             <div class="text-slate-700 space-y-1.5 mb-3">
-              <div class="fluid-meta font-black text-brand-700 font-bold">時段：<span id="nextSlotName">--</span></div>
-              <div class="fluid-meta font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-bold" id="nextDoseTargetTime">預計還有：--</div>
+              <div class="fluid-meta font-bold text-brand-700">時段：<span id="nextSlotName" class="font-black">--</span></div>
+              <div class="fluid-meta text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
             </div>
             <div id="nextMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
               <!-- 動態生成下期藥品 -->
@@ -337,7 +338,7 @@
 
       <!-- 檔案匯出匯入 -->
       <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
-        <span class="text-xs text-slate-500">備份/範本檔案管理:</span>
+        <span class="text-xs text-slate-500 font-bold font-bold">備份/範本檔案管理:</span>
         <div class="flex gap-2">
           <button onclick="exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all">
             📥 匯出當前配置
@@ -546,22 +547,22 @@
     
     document.getElementById('currentBoxIdDisplay').textContent = `藥盒代碼: ${boxId}`;
 
-    // Firebase 配置與安全閥設定
+    // Firebase 配置與安全閥設定 (已完美填寫使用者提供之真實金鑰)
     let firebaseConfig = {
-      apiKey: "", // 💡 當此處為空 "" 時，系統將自動無感轉入極速本機模式，免去雲端請求死鎖阻礙
-      authDomain: "yining-med.firebaseapp.com",
-      projectId: "yining-med",
-      storageBucket: "yining-med.appspot.com",
-      messagingSenderId: "1029384756",
-      appId: "1:1029384756:web:abcd1234efgh"
+      apiKey: "AIzaSyC5qwepU0PnotyRXzD4S0iTBZhHSiW-pus",
+      authDomain: "yining-med-tracker.firebaseapp.com",
+      projectId: "yining-med-tracker",
+      storageBucket: "yining-med-tracker.firebasestorage.app",
+      messagingSenderId: "733833835927",
+      appId: "1:733833835927:web:72727f17a5aa0cec4d00d2"
     };
 
     const appId = 'yining-med-tracker';
     let db = null;
     let auth = null;
-    let isOfflineMode = true; // 預設安全備災開啟
+    let isOfflineMode = true;
 
-    // 安全驗證：若沒填 API key 則完全不啟動 Firebase
+    // 安全驗證：確認金鑰正常後才嘗試啟動 Firebase
     const hasValidFirebase = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
 
     if (typeof firebase !== 'undefined' && hasValidFirebase) {
@@ -625,45 +626,57 @@
 
       if (isRelativeOnly) {
         // 親友防窺防修改模式：完全隱藏管理登入與編輯設定功能
-        notice.classList.add('hidden');
-        btnAdmin.classList.add('hidden');
-        btnEdit.classList.add('hidden');
-        footerEntry.classList.add('hidden'); 
-        boxType.textContent = "獨立專屬雲端藥盒";
-        roleSuffix.textContent = "的藥包";
-        resetBtn.classList.add('hidden');
+        if (notice) notice.classList.add('hidden');
+        if (btnAdmin) btnAdmin.classList.add('hidden');
+        if (btnEdit) btnEdit.classList.add('hidden');
+        if (footerEntry) footerEntry.classList.add('hidden'); 
+        if (boxType) boxType.textContent = "獨立專屬雲端藥盒";
+        if (roleSuffix) roleSuffix.textContent = "的藥包";
+        if (resetBtn) resetBtn.classList.add('hidden');
       } else {
         // 管理員或演示模式：允許解鎖
-        footerEntry.classList.remove('hidden');
+        if (footerEntry) footerEntry.classList.remove('hidden');
         if (window.adminData.isAdminMode) {
-          notice.classList.remove('hidden');
-          btnAdmin.classList.remove('hidden');
-          btnEdit.classList.remove('hidden');
-          boxType.textContent = "管理員主控台";
-          roleSuffix.textContent = "（管理中）";
-          resetBtn.classList.remove('hidden');
+          if (notice) notice.classList.remove('hidden');
+          if (btnAdmin) btnAdmin.classList.remove('hidden');
+          if (btnEdit) btnEdit.classList.remove('hidden');
+          if (boxType) boxType.textContent = "管理員主控台";
+          if (roleSuffix) roleSuffix.textContent = "（管理中）";
+          if (resetBtn) resetBtn.classList.remove('hidden');
+          if (footerEntry) footerEntry.classList.add('hidden'); 
         } else {
-          notice.classList.add('hidden');
-          btnAdmin.classList.add('hidden');
-          btnEdit.classList.add('hidden');
-          boxType.textContent = "智慧雲端藥盒";
-          roleSuffix.textContent = "的藥包";
-          resetBtn.classList.add('hidden');
+          if (notice) notice.classList.add('hidden');
+          if (btnAdmin) btnAdmin.classList.add('hidden');
+          if (btnEdit) btnEdit.classList.add('hidden');
+          if (boxType) boxType.textContent = "智慧雲端藥盒";
+          if (roleSuffix) roleSuffix.textContent = "的藥包";
+          if (resetBtn) resetBtn.classList.add('hidden');
         }
       }
     }
 
-    // 本機暫存讀取備災
+    // 本機暫存讀取與髒快取檢修機制
     function loadOfflineState() {
       const saved = localStorage.getItem(`yining_med_offline_box_v3_${boxId}`);
+      let loadedState = null;
       if (saved) {
         try {
-          window.appState = JSON.parse(saved);
+          loadedState = JSON.parse(saved);
         } catch (e) {
-          resetOfflineDefault();
+          console.warn("解析本機暫存失敗");
         }
+      }
+
+      // 💡 快取安全防護：如果發現本機快取是空的、或者是未成功載入的空框架，立刻強制載入我們最終版完整藥物規劃表
+      if (!loadedState || !loadedState.schedule || !Array.isArray(loadedState.schedule) || loadedState.schedule.length === 0) {
+        window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "陳大朋";
+        window.appState.password = "123456";
+        window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+        window.appState.weeklyLogs = {};
+        window.appState.takenLogs = {};
+        saveOfflineState();
       } else {
-        resetOfflineDefault();
+        window.appState = loadedState;
       }
       
       const savedIndex = localStorage.getItem('yining_med_offline_index_v3');
@@ -672,15 +685,11 @@
           window.adminData.managedBoxes = JSON.parse(savedIndex);
         } catch (e) {}
       }
-    }
 
-    function resetOfflineDefault() {
-      window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "陳大朋";
-      window.appState.password = "123456";
-      window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
-      window.appState.weeklyLogs = {};
-      window.appState.takenLogs = {};
-      saveOfflineState();
+      // 防止索引數據格式損壞
+      if (!window.adminData.managedBoxes || typeof window.adminData.managedBoxes !== 'object' || Array.isArray(window.adminData.managedBoxes)) {
+        window.adminData.managedBoxes = { 'admin_self': '我自己的藥盒' };
+      }
     }
 
     function saveOfflineState() {
@@ -1195,7 +1204,6 @@
     // 💡 電腦端實體鍵盤監聽事件 (高度流暢、完美支援 Enter 送出)
     window.addEventListener('keydown', function(event) {
       const modal = document.getElementById('passwordModal');
-      // 只有在密碼彈窗亮起時，實體鍵盤對應功能才會生效
       if (modal && !modal.classList.contains('hidden')) {
         const key = event.key;
         if (/^[0-9]$/.test(key)) {
