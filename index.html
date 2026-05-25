@@ -82,7 +82,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h1 class="fluid-title tracking-wide text-white leading-none">頤寧安全用藥</h1>
-              <span id="cloudStatusBadge" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-black">讀取中...</span>
+              <span id="cloudStatusBadge" class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black">載入中...</span>
             </div>
             <p class="text-xs text-slate-400 mt-1" id="boxTypeSubtext">智慧雲端藥盒</p>
           </div>
@@ -158,7 +158,7 @@
       <!-- 核心監控三部曲面板 (當前、前一階段、後一階段) -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         
-        <!-- 【左側卡片】前一階段用藥 (過期追溯) -->
+        <!-- 【左側卡片】前一階段用藥 -->
         <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
@@ -428,7 +428,7 @@
   </footer>
 
   <script>
-    // 預設基本用藥規劃數據 (陳大朋 V3版)
+    // 預設基本用藥規劃數據 (對應 Google Doc 最終確認版)
     const defaultSchedule = [
       {
         id: "slot-1",
@@ -448,7 +448,7 @@
         description: "隨餐或飯後30分鐘內",
         items: [
           { id: "item-2-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎。", sideEffect: "對胃黏膜刺激較大，請絕對避免空腹服用。" },
-          { id: "item-2-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。", sideEffect: "可能會有頭暈、全身無力、嗜睡，開車或工作需特別小心。" }
+          { id: "item-2-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。僅在足跟痛時服用。", sideEffect: "可能會有頭暈、全身無力、嗜睡，開車或工作需特別小心。" }
         ]
       },
       {
@@ -478,7 +478,7 @@
         description: "若夜間疼痛或突發急性酸痛時",
         items: [
           { id: "item-5-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "不可完全空腹吃，建議先吃一兩口小餅乾或配牛奶。" },
-          { id: "item-5-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。", sideEffect: "睡前服用能利用嗜睡副作用幫助入睡，避免因痛失眠。" }
+          { id: "item-5-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。睡前服用能利用嗜睡副作用幫助入睡。", sideEffect: "避免因痛失眠。" }
         ]
       }
     ];
@@ -509,11 +509,11 @@
       }
     ];
 
-    // 全域變數狀態
+    // 全域變數狀態 (最速本地先發啟動)
     window.appState = {
       username: "陳大朋",
       password: "123456", 
-      schedule: [],
+      schedule: JSON.parse(JSON.stringify(defaultSchedule)), 
       weeklyLogs: {}, 
       takenLogs: {},
       isUnlocked: false 
@@ -529,7 +529,7 @@
     window.tempInputPass = "";
     window.postPasswordSuccessCallback = null;
 
-    // 解析 URL
+    // 解析 URL 參數
     const urlParams = new URLSearchParams(window.location.search);
     let boxId = urlParams.get('box') || urlParams.get('id');
     const isAdminUrl = urlParams.get('admin') === 'true';
@@ -546,9 +546,9 @@
     
     document.getElementById('currentBoxIdDisplay').textContent = `藥盒代碼: ${boxId}`;
 
-    // Firebase 配置與防阻擋安全載入
+    // Firebase 配置與安全閥設定
     let firebaseConfig = {
-      apiKey: "",
+      apiKey: "", // 💡 當此處為空 "" 時，系統將自動無感轉入極速本機模式，免去雲端請求死鎖阻礙
       authDomain: "yining-med.firebaseapp.com",
       projectId: "yining-med",
       storageBucket: "yining-med.appspot.com",
@@ -559,32 +559,39 @@
     const appId = 'yining-med-tracker';
     let db = null;
     let auth = null;
-    let isOfflineMode = true; // 預設為離線防卡死，隨後嘗試雲端
+    let isOfflineMode = true; // 預設安全備災開啟
 
-    // 初始化 Firebase (若被攔截阻擋或不存在將自動跳入離線運行模式)
-    if (typeof firebase !== 'undefined') {
+    // 安全驗證：若沒填 API key 則完全不啟動 Firebase
+    const hasValidFirebase = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
+
+    if (typeof firebase !== 'undefined' && hasValidFirebase) {
       try {
         const app = firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
         isOfflineMode = false;
       } catch (e) {
-        console.warn("雲端庫連線不全，轉入離線防災模式", e);
+        console.warn("Firebase 啟動失敗，轉入離線暫存模式", e);
         isOfflineMode = true;
       }
+    } else {
+      isOfflineMode = true;
     }
 
-    // 啟動入口
+    // 啟動流程 (DOMContentLoaded 確保時鐘與預設藥物瞬時到位)
     window.addEventListener('DOMContentLoaded', async () => {
-      if (isOfflineMode) {
+      // 1. 第一步：立刻讀取本機數據，並點亮時鐘、加載預設藥盒與排程
+      loadOfflineState();
+      initClock();
+      renderApp();
+      setupModeUI();
+
+      // 2. 第二步：在背景無感對接 Firebase 雲端，防止阻塞前端流程
+      if (!isOfflineMode) {
+        await initAuth();
+      } else {
         document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
         document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
-        loadOfflineState();
-        initClock();
-        renderApp();
-        setupModeUI();
-      } else {
-        await initAuth();
       }
     });
 
@@ -595,17 +602,12 @@
         document.getElementById('cloudStatusBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
         setupFirestoreRealtimeSync();
         setupAdminIndexSync();
-        initClock();
         setupModeUI();
       } catch (e) {
-        console.warn("匿名認證失敗，轉入離線防災模式", e);
+        console.warn("雲端匿名認證未通過，維持本機獨立運行", e);
         isOfflineMode = true;
         document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
         document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
-        loadOfflineState();
-        initClock();
-        renderApp();
-        setupModeUI();
       }
     }
 
@@ -619,7 +621,6 @@
       const resetBtn = document.getElementById('resetWeeklyLogBtn');
       const footerEntry = document.getElementById('adminFooterEntry');
 
-      // 判斷是否為親友模式 (網址中含有 boxId，且沒有管理員標記)
       const isRelativeOnly = (boxId !== 'admin_self' && boxId !== 'demo') && !window.adminData.isAdminMode;
 
       if (isRelativeOnly) {
@@ -627,12 +628,12 @@
         notice.classList.add('hidden');
         btnAdmin.classList.add('hidden');
         btnEdit.classList.add('hidden');
-        footerEntry.classList.add('hidden'); // 入口徹底不見！
+        footerEntry.classList.add('hidden'); 
         boxType.textContent = "獨立專屬雲端藥盒";
         roleSuffix.textContent = "的藥包";
         resetBtn.classList.add('hidden');
       } else {
-        // 管理員或演示模式：允許手動解鎖
+        // 管理員或演示模式：允許解鎖
         footerEntry.classList.remove('hidden');
         if (window.adminData.isAdminMode) {
           notice.classList.remove('hidden');
@@ -695,7 +696,7 @@
       boxDocRef.onSnapshot((docSnap) => {
         if (docSnap.exists) {
           const cloudData = docSnap.data();
-          window.appState.username = cloudData.username || "親友用藥";
+          window.appState.username = cloudData.username || "陳大朋";
           window.appState.password = cloudData.password || "123456";
           window.appState.schedule = cloudData.schedule || JSON.parse(JSON.stringify(defaultSchedule));
           window.appState.weeklyLogs = cloudData.weeklyLogs || {};
@@ -862,11 +863,11 @@
       localStorage.setItem('yining_current_box_id', targetBoxId);
       const url = new URL(window.location.href);
       url.searchParams.set('box', targetBoxId);
-      url.searchParams.set('admin', 'true'); // 保持管理員模式
+      url.searchParams.set('admin', 'true'); 
       window.location.href = url.toString();
     };
 
-    // 複製特定親友專屬服藥連結 (自動隱蔽管理主控台)
+    // 複製特定親友專屬服藥連結
     window.copyRelativeShareLink = function(targetBoxId) {
       const currentUrl = new URL(window.location.href);
       const shareUrl = `${currentUrl.origin}${currentUrl.pathname}?box=${targetBoxId}`;
@@ -962,7 +963,7 @@
 
     // 畫面渲染同步
     window.renderApp = function() {
-      const activeName = window.appState.username || "親友用藥";
+      const activeName = window.appState.username || "陳大朋";
       document.getElementById('headerUserDisplay').textContent = activeName;
       document.getElementById('editUsername').value = activeName;
       document.getElementById('editBoxTitle').textContent = `⚙️ 正在編輯：${activeName}的藥盒`;
@@ -986,22 +987,22 @@
           <div class="p-4 rounded-2xl border-2 ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
             <div class="flex justify-between items-start">
               <div>
-                <span class="fluid-meta font-black text-slate-800">${slot.name}</span>
+                <span class="fluid-meta font-black text-slate-800 font-bold">${slot.name}</span>
                 <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded ml-1 font-bold">${slot.time}</span>
               </div>
               <div>
                 ${isTaken 
                   ? `<span class="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">✓已服 ${isTaken}</span>`
-                  : `<button onclick="markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200">打卡</button>`
+                  : `<button onclick="markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200 font-bold">打卡</button>`
                 }
               </div>
             </div>
-            <div class="text-xs text-slate-500">${slot.description || '無詳細說明'}</div>
+            <div class="text-xs text-slate-500 font-bold">${slot.description || '無詳細說明'}</div>
             <div class="border-t border-dashed border-slate-200 pt-1.5 space-y-1">
               ${slot.items.map(item => `
-                <div class="text-xs text-slate-700 flex justify-between">
+                <div class="text-xs text-slate-700 flex justify-between font-bold">
                   <span>• <strong>${item.name}</strong></span>
-                  <span class="text-[10px] text-slate-400">x${item.dosage}</span>
+                  <span class="text-[10px] text-slate-400 font-bold">x${item.dosage}</span>
                 </div>
               `).join('')}
               ${slot.items.length === 0 ? '<div class="text-xs text-slate-400 text-center font-bold">無安排藥品</div>' : ''}
@@ -1149,6 +1150,8 @@
     window.pressPassKey = function(key) {
       if (key === 'C') {
         window.tempInputPass = "";
+      } else if (key === 'Backspace') {
+        window.tempInputPass = window.tempInputPass.slice(0, -1);
       } else {
         if (window.tempInputPass.length < 8) {
           window.tempInputPass += key;
@@ -1174,6 +1177,11 @@
       if (window.tempInputPass === window.appState.password) {
         closePasswordModal();
         showToast("🔓 密碼驗證成功！");
+        
+        // 核心解鎖重構：將管理端模式設為 true，並主動刷新 UI 展示管理中心跟設定頁籤！
+        window.adminData.isAdminMode = true;
+        setupModeUI();
+
         if (window.postPasswordSuccessCallback) {
           window.postPasswordSuccessCallback();
         }
@@ -1183,6 +1191,24 @@
         updatePasswordDots();
       }
     };
+
+    // 💡 電腦端實體鍵盤監聽事件 (高度流暢、完美支援 Enter 送出)
+    window.addEventListener('keydown', function(event) {
+      const modal = document.getElementById('passwordModal');
+      // 只有在密碼彈窗亮起時，實體鍵盤對應功能才會生效
+      if (modal && !modal.classList.contains('hidden')) {
+        const key = event.key;
+        if (/^[0-9]$/.test(key)) {
+          window.pressPassKey(key);
+        } else if (key === 'Backspace' || key === 'Delete') {
+          window.pressPassKey('Backspace');
+        } else if (key === 'Enter') {
+          window.submitPassCode();
+        } else if (key === 'Escape') {
+          window.closePasswordModal();
+        }
+      }
+    });
 
     // 視圖切換
     window.switchView = function(viewName) {
@@ -1195,6 +1221,8 @@
           document.getElementById('passwordModalTitle').textContent = "進入管理中心驗證";
           openPasswordModal(function() {
             window.appState.isUnlocked = true;
+            window.adminData.isAdminMode = true;
+            setupModeUI();
             switchViewDirectly('admin');
           });
         }
@@ -1282,7 +1310,7 @@
 
             <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
               <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-600">本時段用藥細項</h4>
+                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
                 <button onclick="addEditorItem(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
                   ＋ 新增藥品/食品
                 </button>
@@ -1381,7 +1409,7 @@
         }
       }
 
-      window.appState.username = document.getElementById('editUsername').value.trim() || "親友用藥";
+      window.appState.username = document.getElementById('editUsername').value.trim() || "陳大朋";
       window.appState.schedule = JSON.parse(JSON.stringify(editorSchedule));
       
       saveCloudState();
