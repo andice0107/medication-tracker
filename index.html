@@ -35,11 +35,11 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
-      /* 液態無障礙大字體：隨寬窄螢幕自動調整，清晰易讀但不極端巨大 */
-      --fluid-title: clamp(1.4rem, 4vw, 2.2rem);
-      --fluid-subtitle: clamp(1.1rem, 2.8vw, 1.5rem);
-      --fluid-body: clamp(1.15rem, 2.3vw, 1.4rem);
-      --fluid-meta: clamp(1rem, 2vw, 1.2rem);
+      /* 液態無障礙字體：自動適應寬窄螢幕，字體放大且清晰，絕無兩側空白 */
+      --fluid-title: clamp(1.5rem, 4.5vw, 2.5rem);
+      --fluid-subtitle: clamp(1.2rem, 3vw, 1.7rem);
+      --fluid-body: clamp(1.2rem, 2.5vw, 1.5rem);
+      --fluid-meta: clamp(1.05rem, 2.2vw, 1.3rem);
     }
 
     body {
@@ -63,65 +63,65 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
-  <!-- 引入相容性最高的 Firebase 10.8 UMD 全域套件 (防止 Module 載入崩潰) -->
+  <!-- 引入全域相容性最高的 Firebase 10.8 UMD 套件 (徹底防止 import Module 語法造成網頁死鎖) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe">
+<body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
-  <!-- 頂部滿版導航欄（左右不留白） -->
+  <!-- 頂部滿版導航欄（完全填滿，無任何閒置留白） -->
   <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full">
-    <div class="w-full px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+    <div class="w-full px-4 sm:px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
         <div class="flex items-center gap-3">
           <div class="bg-emerald-500 p-2.5 rounded-2xl shadow-inner">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
           </div>
           <div>
             <div class="flex items-center gap-2">
               <h1 class="fluid-title tracking-wide text-white leading-none">頤寧安全用藥</h1>
-              <span id="cloudStatusBadge" class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black">載入中...</span>
+              <span id="cloudStatusBadge" class="text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black">載入中...</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1" id="boxTypeSubtext">智慧雲端藥盒</p>
+            <p class="text-xs text-slate-400 mt-1" id="boxTypeSubtext">智慧雲端藥盒管理系統</p>
           </div>
         </div>
         
-        <!-- 當前使用者與雲端箱代碼 -->
+        <!-- 使用者角色狀態 -->
         <div class="bg-brand-700/80 px-4 py-2 rounded-2xl border border-white/10 flex flex-col items-end">
           <div class="flex items-center gap-1.5">
             <span class="fluid-subtitle text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
             <span class="text-xs text-slate-300" id="userRoleSuffix">的藥盒</span>
           </div>
-          <span class="text-[10px] text-slate-400 font-mono" id="currentBoxIdDisplay">藥盒代碼: --</span>
+          <span class="text-[11px] text-slate-400 font-mono" id="currentBoxIdDisplay">藥盒代碼: --</span>
         </div>
       </div>
 
-      <!-- 頂部三大分頁切換按鍵 -->
-      <nav class="bg-brand-700 p-1.5 rounded-2xl flex w-full sm:w-auto shadow-inner border border-brand-600" id="navTabsContainer">
-        <button id="btnDayView" onclick="switchView('day')" class="flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
+      <!-- 頂部大按鈕切換列（無縫填滿） -->
+      <nav class="bg-brand-700 p-1.5 rounded-2xl flex w-full lg:w-auto shadow-inner border border-brand-600" id="navTabsContainer">
+        <button id="btnDayView" onclick="switchView('day')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
           📅 一日
         </button>
-        <button id="btnWeekView" onclick="switchView('week')" class="flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button id="btnWeekView" onclick="switchView('week')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           🗓️ 一週
         </button>
-        <!-- 管理員專屬頁籤 -->
-        <button id="btnAdminView" onclick="switchView('admin')" class="hidden flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <!-- 解鎖後自動浮現的管理員按鍵 -->
+        <button id="btnAdminView" onclick="switchView('admin')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           👑 管理中心
         </button>
-        <button id="btnEditView" onclick="switchView('edit')" class="hidden flex-1 sm:flex-initial px-6 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button id="btnEditView" onclick="switchView('edit')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           ⚙️ 設定
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- 主內容區 -->
-  <main class="flex-grow w-full px-2 sm:px-4 py-4 space-y-4">
+  <!-- 主內容區：100% 滿版無留白 -->
+  <main class="flex-grow w-full px-3 py-4 space-y-4 max-w-full">
 
-    <!-- 雲端代碼提示橫幅 (僅管理員顯示) -->
+    <!-- 雲端代碼提示橫幅 -->
     <div id="cloudBoxNotice" class="hidden bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm w-full">
       <div class="flex items-center gap-3">
         <span class="text-2xl">👑</span>
@@ -147,7 +147,7 @@
           <div>
             <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">即時監控中</span>
             <div class="text-4xl sm:text-5xl font-black mt-2 tracking-tight" id="liveClock">00:00:00</div>
-            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate font-bold">2026年5月25日 星期一</div>
+            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate">2026年5月25日 星期一</div>
           </div>
           <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-3 md:pt-0">
             <span class="fluid-meta text-slate-300 block font-bold">⏱️ 距離下一個時段還要：</span>
@@ -173,7 +173,7 @@
               <div class="fluid-meta text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-black" id="prevDoseElapsed">已過去：--</div>
             </div>
             <div id="prevMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
-              <!-- 動態生成上期藥品 -->
+              <!-- 上期藥品 -->
             </div>
           </div>
         </div>
@@ -195,7 +195,7 @@
               <span class="fluid-subtitle font-black text-brand-700">當下時段：<span id="currentSlotName">--</span></span>
             </div>
             <div id="currentMedicationsList" class="space-y-3 max-h-64 overflow-y-auto no-scrollbar pr-1">
-              <!-- 動態生成目前藥品 -->
+              <!-- 目前藥品 -->
             </div>
           </div>
           <div class="pt-4 mt-4 border-t border-slate-100">
@@ -208,7 +208,7 @@
           </div>
         </div>
 
-        <!-- 【右側卡片】後一階段用藥 -->
+        <!-- 【跑馬燈提醒】後一階段用藥 -->
         <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
@@ -222,13 +222,13 @@
               <div class="fluid-meta text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
             </div>
             <div id="nextMedicationsList" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
-              <!-- 動態生成下期藥品 -->
+              <!-- 下期藥品 -->
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 全日服藥概覽清單 -->
+      <!-- 全日服藥安排大綱 -->
       <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3 w-full">
         <h3 class="fluid-subtitle text-slate-800 border-b border-slate-100 pb-2">📋 全日服藥安排大綱</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="dailyOverviewContainer">
@@ -250,12 +250,12 @@
           </button>
         </div>
         <div class="grid grid-cols-7 gap-1 sm:gap-2 overflow-x-auto no-scrollbar w-full" id="weekGrid">
-          <!-- 一週日程打卡卡片動態載入 -->
+          <!-- 一週日程打卡卡片 -->
         </div>
       </div>
     </div>
 
-    <!-- 視圖4: 管理中心 (僅管理員可用) -->
+    <!-- 視圖4: 管理中心 -->
     <div id="adminView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-6 w-full">
       <div class="border-b border-slate-100 pb-4">
         <h2 class="fluid-title text-slate-800 flex items-center gap-2">👑 頤寧藥盒 - 管理員主控台</h2>
@@ -286,31 +286,31 @@
       <div class="space-y-3">
         <h3 class="fluid-subtitle text-slate-800">📋 目前管理的藥盒列表</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="relativesListContainer">
-          <!-- 動態載入親友藥盒列表 -->
+          <!-- 親友藥盒列表 -->
         </div>
       </div>
     </div>
 
-    <!-- 視圖3: 系統配置與換藥修改 (僅管理員解鎖可用) -->
+    <!-- 視圖3: 系統配置與換藥修改 (編輯/新增/刪除) -->
     <div id="editView" class="hidden bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-6 w-full">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
         <div>
           <h2 class="fluid-title text-slate-800" id="editBoxTitle">⚙️ 正在編輯：--的藥盒</h2>
-          <p class="text-xs text-slate-500 mt-1">您可以隨時新增藥品、更改劑量，更可以使用範本套用。</p>
+          <p class="text-xs text-slate-500 mt-1">您可以自由新增、編輯、刪除時段或任何用藥品項。</p>
         </div>
         <button onclick="requestLockSettings()" class="text-sm font-black text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl transition-all">
-          🔒 退出編輯
+          🔒 鎖定退出
         </button>
       </div>
 
-      <!-- 個人化與安全密碼管理 -->
+      <!-- 個人化設定與密碼變更 -->
       <div class="bg-slate-50 p-5 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-black text-slate-700 mb-1">使用者姓名</label>
+          <label class="block text-sm font-black text-slate-700 mb-1">修改使用者姓名</label>
           <input type="text" id="editUsername" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base">
         </div>
         <div>
-          <label class="block text-sm font-black text-slate-700 mb-1">變更管理員密碼 (6~8位數字)</label>
+          <label class="block text-sm font-black text-slate-700 mb-1">變更管理密碼 (6~8位數字)</label>
           <div class="flex gap-2">
             <input type="password" id="editPassword" placeholder="輸入新密碼" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base">
             <button onclick="updateSystemPassword()" class="bg-brand-600 hover:bg-brand-500 text-white font-black px-4 rounded-xl text-sm transition-all whitespace-nowrap">
@@ -320,25 +320,25 @@
         </div>
       </div>
 
-      <!-- 快速範本套用區 -->
+      <!-- 快速範本套用 -->
       <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/30 p-5 rounded-3xl space-y-3">
         <h4 class="font-black text-indigo-950 text-base flex items-center gap-1.5">
-          <span>💡 快速套用推薦範本</span>
+          <span>💡 快速載入建議用藥表（不見時可在此還原）</span>
         </h4>
-        <p class="text-xs text-indigo-800">套用內建範本，能一鍵將規劃好的用藥與保健食品時段帶入，再行微調：</p>
+        <p class="text-xs text-indigo-800">如果紀錄遺失或清空，點擊下方即可瞬時載入您上傳的最終規劃版本：</p>
         <div class="flex flex-wrap gap-2">
           <button onclick="applyPrebuiltTemplate('statins')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
-            ⭐ 三高與補鈣葉黃素建議規劃 (陳大朋 V3版)
+            ⭐ 妥寧睡前服與補鈣葉黃素規劃 (最終版)
           </button>
           <button onclick="applyPrebuiltTemplate('simple')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
-            ⭐ 簡易每日三餐基本服藥規劃
+            ⭐ 簡易三餐飯後基本用藥
           </button>
         </div>
       </div>
 
-      <!-- 檔案匯出匯入 -->
+      <!-- 範本檔案備份 -->
       <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
-        <span class="text-xs text-slate-500 font-bold font-bold">備份/範本檔案管理:</span>
+        <span class="text-xs text-slate-500 font-bold">備份/範本檔案管理:</span>
         <div class="flex gap-2">
           <button onclick="exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all">
             📥 匯出當前配置
@@ -350,7 +350,7 @@
         </div>
       </div>
 
-      <!-- 服藥時段編輯區 -->
+      <!-- 服藥時段與藥品編輯主體 -->
       <div class="space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h3 class="fluid-subtitle text-slate-800">服藥時段與藥物設定</h3>
@@ -359,7 +359,7 @@
           </button>
         </div>
         <div id="editorSlotsContainer" class="space-y-4 w-full">
-          <!-- 編輯時段模組動態生成 -->
+          <!-- 編輯模組動態生成 -->
         </div>
       </div>
 
@@ -376,7 +376,7 @@
 
   </main>
 
-  <!-- 🔒 安全密碼鎖手動輸入視窗 -->
+  <!-- 🔒 安全密碼鎖手動輸入視窗 (九宮格大數字防誤觸設計) -->
   <div id="passwordModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl space-y-6 transform transition-all duration-300" onclick="event.stopPropagation()">
       <div class="text-center">
@@ -384,7 +384,7 @@
           🔒
         </div>
         <h3 class="fluid-subtitle text-slate-800" id="passwordModalTitle">管理員安全驗證</h3>
-        <p class="text-xs text-slate-500 mt-1">需輸入管理員密碼以進行變更設定與配置</p>
+        <p class="text-xs text-slate-500 mt-1">請輸入 6~8 位管理密碼 (預設: 123456)</p>
       </div>
       <div class="flex justify-center items-center gap-3 py-2">
         <div class="flex gap-2 justify-center" id="passwordDots">
@@ -416,7 +416,7 @@
     </div>
   </div>
 
-  <!-- ⚙️ 頁尾管理端快速入口 (僅親友模式時自動隱藏) -->
+  <!-- ⚙️ 頁尾管理端快速入口 (僅親友專屬防窺代碼模式時自動隱藏) -->
   <div id="adminFooterEntry" class="w-full flex justify-center py-4 bg-slate-200 border-t border-slate-300">
     <button onclick="switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all">
       ⚙️ 進入管理員模式
@@ -428,8 +428,14 @@
     <p class="mt-1 text-[11px] text-slate-500">本軟體數據加密保存在本機與雲端 Firestore 資料庫.</p>
   </footer>
 
+  <!-- Toast 訊息浮窗 -->
+  <div id="toastMessage" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2 border border-white/10">
+    <span id="toastIcon">💡</span>
+    <span id="toastText">訊息</span>
+  </div>
+
   <script>
-    // 預設基本用藥規劃數據 (對應 Google Doc 最終確認版)
+    // 預設基本用藥規劃數據 (對應 Google Doc 最終確認妥寧睡前版)
     const defaultSchedule = [
       {
         id: "slot-1",
@@ -437,9 +443,9 @@
         time: "08:30",
         description: "隨餐或飯後30分鐘內",
         items: [
-          { id: "item-1-1", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，飯後吃吸收最佳。", sideEffect: "無特殊副作用，尿液變黃為正常現象。" },
-          { id: "item-1-2", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。", sideEffect: "無。需長期每日穩定服用。" },
-          { id: "item-1-3", name: "魚油", type: "supplement", dosage: "2 顆", effect: "脂溶性 Omega-3，保護心血管。", sideEffect: "注意！請避免與鈣片同時服用，以免產生皂化降低吸收率。" }
+          { id: "item-1-1", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
+          { id: "item-1-2", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
+          { id: "item-1-3", name: "魚油", type: "supplement", dosage: "2 顆", effect: "脂溶性 Omega-3，保護心血管。必須於飯後30分鐘內服用。", sideEffect: "注意！請避免與鈣片同時服用，以免產生皂化降低吸收率。" }
         ]
       },
       {
@@ -448,8 +454,8 @@
         time: "12:30",
         description: "隨餐或飯後30分鐘內",
         items: [
-          { id: "item-2-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎。", sideEffect: "對胃黏膜刺激較大，請絕對避免空腹服用。" },
-          { id: "item-2-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。僅在足跟痛時服用。", sideEffect: "可能會有頭暈、全身無力、嗜睡，開車或工作需特別小心。" }
+          { id: "item-2-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。", sideEffect: "對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。" },
+          { id: "item-2-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。僅在足跟痛時服用。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，開車或機械操作請留意。" }
         ]
       },
       {
@@ -458,8 +464,8 @@
         time: "18:30",
         description: "隨餐或飯後30分鐘內",
         items: [
-          { id: "item-3-1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。", sideEffect: "服用期間絕對禁止食用「葡萄柚」與「柚子」！避免使用高鉀低鈉鹽。" },
-          { id: "item-3-2", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "水飛薊素，幫助護肝與機能維持。", sideEffect: "脂溶性成分，晚餐隨餐吸收最好。" }
+          { id: "item-3-1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。以維持夜間及清晨的血壓穩定。", sideEffect: "服用期間絕對禁止食用「葡萄柚」與「柚子」！避免使用高鉀低鈉鹽。" },
+          { id: "item-3-2", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "水飛薊素，隨晚餐後服用能大幅提升吸收率。", sideEffect: "脂溶性成分，晚餐隨餐吸收最好。" }
         ]
       },
       {
@@ -468,18 +474,18 @@
         time: "22:00",
         description: "就寢前30分鐘",
         items: [
-          { id: "item-4-1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "1 顆", effect: "Atorvastatin 長效型藥物，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定睡前吃效果佳，不易遺忘。" },
-          { id: "item-4-2", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "幫助補鈣。鈣離子具穩定神經效果，有助睡眠。", sideEffect: "與早晨魚油間隔達12小時，可避免皂化作用，吸收率達最大。" }
+          { id: "item-4-1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "1 顆", effect: "長效型降血脂藥物(Atorvastatin)，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定於睡前服用效果佳，且避開忙碌時段防漏藥。" },
+          { id: "item-4-2", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油完美間隔12小時，完全避免皂化反應，吸收率極大化。" }
         ]
       },
       {
         id: "slot-5",
         name: "骨科備用藥",
         time: "隨時",
-        description: "若夜間疼痛或突發急性酸痛時",
+        description: "若夜間因足跟骨刺疼痛發作時",
         items: [
-          { id: "item-5-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "不可完全空腹吃，建議先吃一兩口小餅乾或配牛奶。" },
-          { id: "item-5-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。睡前服用能利用嗜睡副作用幫助入睡。", sideEffect: "避免因痛失眠。" }
+          { id: "item-5-1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。" },
+          { id: "item-5-2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用有助於改善因痛失眠。", sideEffect: "避免因痛失眠。" }
         ]
       }
     ];
@@ -510,7 +516,7 @@
       }
     ];
 
-    // 全域變數狀態 (最速本地先發啟動)
+    // 全域變數狀態 (秒級本地先發啟動，完全防空白防卡死)
     window.appState = {
       username: "陳大朋",
       password: "123456", 
@@ -667,8 +673,15 @@
         }
       }
 
-      // 💡 快取安全防護：如果發現本機快取是空的、或者是未成功載入的空框架，立刻強制載入我們最終版完整藥物規劃表
-      if (!loadedState || !loadedState.schedule || !Array.isArray(loadedState.schedule) || loadedState.schedule.length === 0) {
+      // 💡 智慧防髒快取：若暫存中不包含預設的5個完整時段（包含妥寧），強制載入 Google Doc 最終版規劃表，絕不空白！
+      let isCacheValid = loadedState && loadedState.schedule && Array.isArray(loadedState.schedule) && loadedState.schedule.length >= 5;
+      if (isCacheValid) {
+        // 檢查妥寧是否存在，防舊版本殘留
+        const hasTuoning = loadedState.schedule.some(s => s.items.some(i => i.name.includes("妥寧")));
+        if (!hasTuoning) isCacheValid = false;
+      }
+
+      if (!isCacheValid) {
         window.appState.username = boxId === 'admin_self' ? "我自己的藥盒" : "陳大朋";
         window.appState.password = "123456";
         window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
@@ -1187,9 +1200,13 @@
         closePasswordModal();
         showToast("🔓 密碼驗證成功！");
         
-        // 核心解鎖重構：將管理端模式設為 true，並主動刷新 UI 展示管理中心跟設定頁籤！
+        // 核心解鎖重構：將管理端解鎖設為 true，並立即刷新導航欄
+        window.appState.isUnlocked = true;
         window.adminData.isAdminMode = true;
         setupModeUI();
+
+        // 💡 登入成功後，直接進入「設定編輯頁面」，徹底避免進去後不知道去哪裡點擊
+        switchViewDirectly('edit');
 
         if (window.postPasswordSuccessCallback) {
           window.postPasswordSuccessCallback();
@@ -1201,7 +1218,7 @@
       }
     };
 
-    // 💡 電腦端實體鍵盤監聽事件 (高度流暢、完美支援 Enter 送出)
+    // 💡 電腦端實體鍵盤監聽事件 (高度流暢、完美支援 Enter 送出，數字鍵登打)
     window.addEventListener('keydown', function(event) {
       const modal = document.getElementById('passwordModal');
       if (modal && !modal.classList.contains('hidden')) {
