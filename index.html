@@ -63,7 +63,7 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
-  <!-- 引入 UMD 全域相容性套件，完全杜絕 module 阻擋崩潰 -->
+  <!-- 引入全域相容性最高的 Firebase 10.8 UMD 套件 (徹底防止 import Module 語法造成網頁死鎖) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -511,8 +511,8 @@
       }
     ];
 
-    // 全域變數狀態
-    window.appState = {
+    // 全域變數狀態 (最速本地先發啟動，完全防空白防卡死)
+    let appState = {
       username: "陳大朋",
       password: "123456", 
       schedule: JSON.parse(JSON.stringify(defaultSchedule)), 
@@ -521,7 +521,7 @@
       isUnlocked: false 
     };
 
-    window.adminData = {
+    let adminData = {
       isAdminMode: false,
       managerBoxId: "admin_self", // 👑 管理者的藥盒代碼
       managedBoxes: {
@@ -529,35 +529,15 @@
       }
     };
 
-    window.tempInputPass = "";
-    window.postPasswordSuccessCallback = null;
+    let tempInputPass = "";
+    let postPasswordSuccessCallback = null;
+    let boxId = "admin_self";
+    let isOfflineMode = true; // 預設為離線防卡死，隨後嘗試雲端
+    let db = null;
+    let auth = null;
+    const appId = 'yining-med-tracker';
 
-    // 解析 URL 參數
-    const urlParams = new URLSearchParams(window.location.search);
-    let boxId = urlParams.get('box') || urlParams.get('id');
-    const isAdminUrl = urlParams.get('admin') === 'true';
-
-    if (isAdminUrl) {
-      window.adminData.isAdminMode = true;
-    }
-
-    // 載入與初始化本機緩存
-    loadOfflineState();
-
-    // 💡 管理者自適應機制：如果沒有指定 box，自動帶入管理者對應的 boxId！
-    if (!boxId) {
-      boxId = window.adminData.managerBoxId || 'admin_self';
-      localStorage.setItem('yining_current_box_id', boxId);
-    } else {
-      localStorage.setItem('yining_current_box_id', boxId);
-    }
-    
-    // 重新根據確定的 boxId 載入用藥排程
-    loadActiveBoxState();
-    
-    document.getElementById('currentBoxIdDisplay').textContent = `藥盒代碼: ${boxId}`;
-
-    // Firebase 配置與安全閥設定
+    // Firebase 真實配置連線
     let firebaseConfig = {
       apiKey: "AIzaSyC5qwepU0PnotyRXzD4S0iTBZhHSiW-pus",
       authDomain: "yining-med-tracker.firebaseapp.com",
@@ -567,12 +547,6 @@
       appId: "1:733833835927:web:72727f17a5aa0cec4d00d2"
     };
 
-    const appId = 'yining-med-tracker';
-    let db = null;
-    let auth = null;
-    let isOfflineMode = true;
-
-    // 安全驗證：確認金鑰正常後才嘗試啟動 Firebase
     const hasValidFirebase = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
 
     if (typeof firebase !== 'undefined' && hasValidFirebase) {
@@ -591,17 +565,46 @@
 
     // 啟動流程 (DOMContentLoaded 確保時鐘與預設藥物瞬時到位)
     window.addEventListener('DOMContentLoaded', async () => {
-      // 1. 第一步：點亮時鐘並瞬間渲染 UI (無等待延遲)
+      // 1. 解析 URL 參數
+      const urlParams = new URLSearchParams(window.location.search);
+      let paramBoxId = urlParams.get('box') || urlParams.get('id');
+      const isAdminUrl = urlParams.get('admin') === 'true';
+
+      if (isAdminUrl) {
+        adminData.isAdminMode = true;
+      }
+
+      // 2. 載入與初始化本機緩存
+      loadOfflineState();
+
+      // 3. 確定使用的 boxId
+      if (paramBoxId) {
+        boxId = paramBoxId;
+        localStorage.setItem('yining_current_box_id', boxId);
+      } else {
+        boxId = adminData.managerBoxId || 'admin_self';
+        localStorage.setItem('yining_current_box_id', boxId);
+      }
+      
+      document.getElementById('currentBoxIdDisplay').textContent = `藥盒代碼: ${boxId}`;
+
+      // 4. 載入特定藥盒資料 (內置髒快取安全校正機制，絕不顯示空白)
+      loadActiveBoxState();
+
+      // 5. 啟動時鐘與渲染介面
       initClock();
       renderApp();
       setupModeUI();
 
-      // 2. 第二步：在背景對接 Firebase 雲端，防止阻塞前端流程
+      // 6. 背景連接 Firebase
       if (!isOfflineMode) {
         await initAuth();
       } else {
-        document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
-        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          badge.textContent = "本機離線模式";
+          badge.className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+        }
       }
     });
 
@@ -631,10 +634,9 @@
       const resetBtn = document.getElementById('resetWeeklyLogBtn');
       const footerEntry = document.getElementById('adminFooterEntry');
 
-      const isRelativeOnly = (boxId !== window.adminData.managerBoxId) && !window.adminData.isAdminMode;
+      const isRelativeOnly = (boxId !== adminData.managerBoxId) && !adminData.isAdminMode;
 
       if (isRelativeOnly) {
-        // 親友防窺防修改模式：完全隱藏管理登入與編輯設定功能
         if (notice) notice.classList.add('hidden');
         if (btnAdmin) btnAdmin.classList.add('hidden');
         if (btnEdit) btnEdit.classList.add('hidden');
@@ -643,9 +645,8 @@
         if (roleSuffix) roleSuffix.textContent = "的藥包";
         if (resetBtn) resetBtn.classList.add('hidden');
       } else {
-        // 管理員或演示模式：允許解鎖
         if (footerEntry) footerEntry.classList.remove('hidden');
-        if (window.adminData.isAdminMode) {
+        if (adminData.isAdminMode) {
           if (notice) notice.classList.remove('hidden');
           if (btnAdmin) btnAdmin.classList.remove('hidden');
           if (btnEdit) btnEdit.classList.remove('hidden');
@@ -671,18 +672,18 @@
       
       if (savedIndex) {
         try {
-          window.adminData.managedBoxes = JSON.parse(savedIndex);
+          adminData.managedBoxes = JSON.parse(savedIndex);
         } catch (e) {}
       }
       if (savedManager) {
-        window.adminData.managerBoxId = savedManager;
+        adminData.managerBoxId = savedManager;
       } else {
-        window.adminData.managerBoxId = "admin_self";
+        adminData.managerBoxId = "admin_self";
       }
 
       // 防止索引數據格式損壞
-      if (!window.adminData.managedBoxes || typeof window.adminData.managedBoxes !== 'object' || Array.isArray(window.adminData.managedBoxes)) {
-        window.adminData.managedBoxes = { 'admin_self': '陳大朋（我）' };
+      if (!adminData.managedBoxes || typeof adminData.managedBoxes !== 'object' || Array.isArray(adminData.managedBoxes)) {
+        adminData.managedBoxes = { 'admin_self': '陳大朋（我）' };
       }
     }
 
@@ -706,21 +707,21 @@
       }
 
       if (!isCacheValid) {
-        window.appState.username = boxId === window.adminData.managerBoxId ? "陳大朋" : (window.adminData.managedBoxes[boxId] || "親友藥包");
-        window.appState.password = "123456";
-        window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
-        window.appState.weeklyLogs = {};
-        window.appState.takenLogs = {};
+        appState.username = boxId === adminData.managerBoxId ? "陳大朋" : (adminData.managedBoxes[boxId] || "親友藥包");
+        appState.password = "123456";
+        appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+        appState.weeklyLogs = {};
+        appState.takenLogs = {};
         saveOfflineState();
       } else {
-        window.appState = loadedState;
+        appState = loadedState;
       }
     }
 
     function saveOfflineState() {
-      localStorage.setItem(`yining_med_offline_box_v3_${boxId}`, JSON.stringify(window.appState));
-      localStorage.setItem('yining_med_offline_index_v3', JSON.stringify(window.adminData.managedBoxes));
-      localStorage.setItem('yining_med_manager_id_v3', window.adminData.managerBoxId);
+      localStorage.setItem(`yining_med_offline_box_v3_${boxId}`, JSON.stringify(appState));
+      localStorage.setItem('yining_med_offline_index_v3', JSON.stringify(adminData.managedBoxes));
+      localStorage.setItem('yining_med_manager_id_v3', adminData.managerBoxId);
     }
 
     // 雲端即時監聽與自動防護 (用藥與打卡資料)
@@ -731,18 +732,18 @@
       boxDocRef.onSnapshot((docSnap) => {
         if (docSnap.exists) {
           const cloudData = docSnap.data();
-          window.appState.username = cloudData.username || "陳大朋";
-          window.appState.password = cloudData.password || "123456";
-          window.appState.schedule = cloudData.schedule || JSON.parse(JSON.stringify(defaultSchedule));
-          window.appState.weeklyLogs = cloudData.weeklyLogs || {};
-          window.appState.takenLogs = cloudData.takenLogs || {};
+          appState.username = cloudData.username || "陳大朋";
+          appState.password = cloudData.password || "123456";
+          appState.schedule = cloudData.schedule || JSON.parse(JSON.stringify(defaultSchedule));
+          appState.weeklyLogs = cloudData.weeklyLogs || {};
+          appState.takenLogs = cloudData.takenLogs || {};
           renderApp();
           calculateTimesAndReminders();
         } else {
           // 初始化雲端資料
-          window.appState.username = boxId === window.adminData.managerBoxId ? "陳大朋" : "親友藥包";
-          window.appState.password = "123456";
-          window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+          appState.username = boxId === adminData.managerBoxId ? "陳大朋" : "親友藥包";
+          appState.password = "123456";
+          appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
           saveCloudState();
         }
       }, (err) => {
@@ -761,8 +762,8 @@
       indexDocRef.onSnapshot((docSnap) => {
         if (docSnap.exists) {
           const indexData = docSnap.data();
-          window.adminData.managedBoxes = indexData.boxes || { 'admin_self': '陳大朋（我）' };
-          window.adminData.managerBoxId = indexData.managerBoxId || 'admin_self';
+          adminData.managedBoxes = indexData.boxes || { 'admin_self': '陳大朋（我）' };
+          adminData.managerBoxId = indexData.managerBoxId || 'admin_self';
           renderRelativesList();
         } else {
           saveAdminIndex({ 'admin_self': '陳大朋（我）' }, 'admin_self');
@@ -789,11 +790,11 @@
       const boxDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(boxId);
       try {
         await boxDocRef.set({
-          username: window.appState.username,
-          password: window.appState.password,
-          schedule: window.appState.schedule,
-          weeklyLogs: window.appState.weeklyLogs,
-          takenLogs: window.appState.takenLogs
+          username: appState.username,
+          password: appState.password,
+          schedule: appState.schedule,
+          weeklyLogs: appState.weeklyLogs,
+          takenLogs: appState.takenLogs
         });
       } catch (e) {
         saveOfflineState();
@@ -803,7 +804,7 @@
     // ================= 管理員主控台操作邏輯 =================
 
     // 快速新增親友藥盒
-    window.createNewRelativeBox = async function() {
+    function createNewRelativeBox() {
       const nameInput = document.getElementById('newRelativeName');
       const boxIdInput = document.getElementById('newRelativeBoxId');
       
@@ -820,21 +821,21 @@
         return;
       }
 
-      if (window.adminData.managedBoxes[rBoxId]) {
+      if (adminData.managedBoxes[rBoxId]) {
         showToast("⚠️ 該專屬代碼已被使用，請更換代碼！", "warning");
         return;
       }
 
       // 新增至索引並初始化雲端資料
-      window.adminData.managedBoxes[rBoxId] = rName;
-      await saveAdminIndex(window.adminData.managedBoxes, window.adminData.managerBoxId);
+      adminData.managedBoxes[rBoxId] = rName;
+      saveAdminIndex(adminData.managedBoxes, adminData.managerBoxId);
 
       // 建立對應藥盒配置
       if (!isOfflineMode) {
         const boxDocRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(rBoxId);
-        await boxDocRef.set({
+        boxDocRef.set({
           username: rName,
-          password: window.appState.password,
+          password: appState.password,
           schedule: JSON.parse(JSON.stringify(defaultSchedule)),
           weeklyLogs: {},
           takenLogs: {}
@@ -845,26 +846,26 @@
       boxIdInput.value = "";
       showToast(`🎉 成功為 ${rName} 建立專屬藥盒！`);
       renderRelativesList();
-    };
+    }
 
     // 指定誰是管理者之切換按鈕 👑
-    window.setAsManager = async function(targetBoxId) {
-      if (window.adminData.managerBoxId === targetBoxId) {
+    function setAsManager(targetBoxId) {
+      if (adminData.managerBoxId === targetBoxId) {
         showToast("💡 該成員已經是系統管理者");
         return;
       }
-      const oldManagerName = window.adminData.managedBoxes[window.adminData.managerBoxId] || "原管理者";
-      const newManagerName = window.adminData.managedBoxes[targetBoxId];
+      const oldManagerName = adminData.managedBoxes[adminData.managerBoxId] || "原管理者";
+      const newManagerName = adminData.managedBoxes[targetBoxId];
       
       if (confirm(`👑 確定要將預設管理者從「${oldManagerName}」變更為「${newManagerName}」嗎？`)) {
-        window.adminData.managerBoxId = targetBoxId;
+        adminData.managerBoxId = targetBoxId;
         saveOfflineState();
-        await saveAdminIndex(window.adminData.managedBoxes, targetBoxId);
+        saveAdminIndex(adminData.managedBoxes, targetBoxId);
         showToast(`👑 已成功將 ${newManagerName} 設為預設管理者！`);
         renderRelativesList();
         setupModeUI();
       }
-    };
+    }
 
     // 渲染管理清單
     function renderRelativesList() {
@@ -874,10 +875,10 @@
       let html = "";
       const currentUrl = new URL(window.location.href);
 
-      Object.entries(window.adminData.managedBoxes).forEach(([rBoxId, rName]) => {
+      Object.entries(adminData.managedBoxes).forEach(([rBoxId, rName]) => {
         const relativeUrl = `${currentUrl.origin}${currentUrl.pathname}?box=${rBoxId}`;
         const isSelf = rBoxId === boxId;
-        const isManager = rBoxId === window.adminData.managerBoxId;
+        const isManager = rBoxId === adminData.managerBoxId;
 
         html += `
           <div class="bg-white p-5 rounded-2xl border-2 ${isSelf ? 'border-brand-500 ring-4 ring-brand-100' : 'border-slate-200'} shadow-sm flex flex-col justify-between space-y-3">
@@ -925,16 +926,16 @@
     }
 
     // 切換正在編輯的藥盒
-    window.switchActiveEditingBox = function(targetBoxId) {
+    function switchActiveEditingBox(targetBoxId) {
       localStorage.setItem('yining_current_box_id', targetBoxId);
       const url = new URL(window.location.href);
       url.searchParams.set('box', targetBoxId);
       url.searchParams.set('admin', 'true'); 
       window.location.href = url.toString();
-    };
+    }
 
     // 複製特定親友專屬服藥連結
-    window.copyRelativeShareLink = function(targetBoxId) {
+    function copyRelativeShareLink(targetBoxId) {
       const currentUrl = new URL(window.location.href);
       const shareUrl = `${currentUrl.origin}${currentUrl.pathname}?box=${targetBoxId}`;
       
@@ -945,14 +946,14 @@
       document.execCommand('copy');
       document.body.removeChild(el);
 
-      showToast(`🔗 ${window.adminData.managedBoxes[targetBoxId]} 的專屬連結已複製！傳送給他們即可打卡。`);
-    };
+      showToast(`🔗 ${adminData.managedBoxes[targetBoxId]} 的專屬連結已複製！傳送給他們即可打卡。`);
+    }
 
     // 移除親友藥盒
-    window.deleteRelativeBox = async function(targetBoxId, rName) {
+    function deleteRelativeBox(targetBoxId, rName) {
       if (confirm(`⚠️ 確定要完全移除並銷毀 ${rName} 的藥盒與雲端配置嗎？這將會清除他的所有打卡歷史。`)) {
-        delete window.adminData.managedBoxes[targetBoxId];
-        await saveAdminIndex(window.adminData.managedBoxes, window.adminData.managerBoxId);
+        delete adminData.managedBoxes[targetBoxId];
+        saveAdminIndex(adminData.managedBoxes, adminData.managerBoxId);
         showToast(`🗑️ 已移除 ${rName} 的藥盒。`);
         
         if (boxId === targetBoxId) {
@@ -961,28 +962,28 @@
           renderRelativesList();
         }
       }
-    };
+    }
 
     // 套用預設範本
-    window.applyPrebuiltTemplate = function(templateType) {
+    function applyPrebuiltTemplate(templateType) {
       if (confirm("⚠️ 套用此範本將會完全覆蓋此藥盒目前的服藥時段與藥物設定。確定要套用嗎？")) {
         if (templateType === 'statins') {
-          window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+          appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
         } else if (templateType === 'simple') {
-          window.appState.schedule = JSON.parse(JSON.stringify(simpleSchedule));
+          appState.schedule = JSON.parse(JSON.stringify(simpleSchedule));
         }
         renderEditor();
         showToast("⭐ 範本已成功載入至編輯區，點擊下方「儲存修改並套用」即可生效！");
       }
-    };
+    }
 
     // ================= 核心計算與打卡系統 =================
 
     // 標記已服用 (會自動同步寫入雲端)
-    window.markCurrentSlotAsTaken = function(slotId) {
+    function markCurrentSlotAsTaken(slotId) {
       if (!slotId) {
         const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
-        const validSlots = window.appState.schedule.filter(s => s.time && s.time !== "隨時");
+        const validSlots = appState.schedule.filter(s => s.time && s.time !== "隨時");
         validSlots.sort((a, b) => {
           const [ah, am] = a.time.split(':').map(Number);
           const [bh, bm] = b.time.split(':').map(Number);
@@ -1015,21 +1016,21 @@
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      if (!window.appState.takenLogs[todayStr]) window.appState.takenLogs[todayStr] = {};
-      window.appState.takenLogs[todayStr][slotId] = timeStr;
+      if (!appState.takenLogs[todayStr]) appState.takenLogs[todayStr] = {};
+      appState.takenLogs[todayStr][slotId] = timeStr;
 
-      if (!window.appState.weeklyLogs[todayStr]) window.appState.weeklyLogs[todayStr] = {};
-      window.appState.weeklyLogs[todayStr][slotId] = true;
+      if (!appState.weeklyLogs[todayStr]) appState.weeklyLogs[todayStr] = {};
+      appState.weeklyLogs[todayStr][slotId] = true;
 
       saveCloudState();
       showToast(`✅ 已記錄於 ${timeStr} 服用藥物！`);
       calculateTimesAndReminders();
       renderApp();
-    };
+    }
 
     // 畫面渲染同步
-    window.renderApp = function() {
-      const activeName = window.appState.username || "陳大朋";
+    function renderApp() {
+      const activeName = appState.username || "陳大朋";
       document.getElementById('headerUserDisplay').textContent = activeName;
       document.getElementById('editUsername').value = activeName;
       document.getElementById('editBoxTitle').textContent = `⚙️ 正在編輯：${activeName}的藥盒`;
@@ -1037,7 +1038,7 @@
       renderDailyOverview();
       renderWeeklyGrid();
       renderRelativesList();
-    };
+    }
 
     function renderDailyOverview() {
       const container = document.getElementById('dailyOverviewContainer');
@@ -1046,8 +1047,8 @@
       const todayStr = getTodayStr();
       let html = "";
 
-      window.appState.schedule.forEach(slot => {
-        const isTaken = window.appState.takenLogs[todayStr]?.[slot.id];
+      appState.schedule.forEach(slot => {
+        const isTaken = appState.takenLogs[todayStr]?.[slot.id];
         
         html += `
           <div class="p-4 rounded-2xl border-2 ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
@@ -1106,8 +1107,8 @@
             </div>
 
             <div class="space-y-4 mt-4 w-full flex flex-col items-center">
-              ${window.appState.schedule.map(slot => {
-                const isTaken = window.appState.takenLogs[dateStr]?.[slot.id];
+              ${appState.schedule.map(slot => {
+                const isTaken = appState.takenLogs[dateStr]?.[slot.id];
                 return `
                   <div onclick="toggleWeeklyDose('${dateStr}', '${slot.id}')" class="flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95">
                     <span class="text-[10px] text-slate-500 font-bold mb-1">${slot.name.substring(0, 2)}</span>
@@ -1130,8 +1131,8 @@
       container.innerHTML = html;
     }
 
-    window.toggleWeeklyDose = function(dateStr, slotId) {
-      if (!window.adminData.isAdminMode) {
+    function toggleWeeklyDose(dateStr, slotId) {
+      if (!adminData.isAdminMode) {
         showToast("⚠️ 服藥紀錄僅限當下時段打卡，修改歷史請洽管理員。", "warning");
         return;
       }
@@ -1139,98 +1140,98 @@
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      if (!window.appState.takenLogs[dateStr]) {
-        window.appState.takenLogs[dateStr] = {};
+      if (!appState.takenLogs[dateStr]) {
+        appState.takenLogs[dateStr] = {};
       }
 
-      if (window.appState.takenLogs[dateStr][slotId]) {
-        delete window.appState.takenLogs[dateStr][slotId];
+      if (appState.takenLogs[dateStr][slotId]) {
+        delete appState.takenLogs[dateStr][slotId];
         showToast("🧹 已取消該時段的服藥進度");
       } else {
-        window.appState.takenLogs[dateStr][slotId] = timeStr;
+        appState.takenLogs[dateStr][slotId] = timeStr;
         showToast(`✅ 已手動登錄：${dateStr} ${timeStr} 服用`);
       }
 
       saveCloudState();
       renderApp();
       calculateTimesAndReminders();
-    };
+    }
 
     // 密碼安全解鎖 (九宮格按鍵)
-    window.requestAccessToSettings = function() {
-      if (window.appState.isUnlocked) {
+    function requestAccessToSettings() {
+      if (appState.isUnlocked) {
         switchViewDirectly('edit');
       } else {
         document.getElementById('passwordModalTitle').textContent = "管理員密碼驗證";
         openPasswordModal(function() {
-          window.appState.isUnlocked = true;
+          appState.isUnlocked = true;
           switchViewDirectly('edit');
         });
       }
-    };
+    }
 
     // 歸零打卡紀錄
-    window.requestResetWeeklyLogs = function() {
+    function requestResetWeeklyLogs() {
       openPasswordModal(function() {
         if (confirm("確定要重設此藥盒本週所有的用藥打卡紀錄嗎？此動作無法復原。")) {
-          window.appState.takenLogs = {};
-          window.appState.weeklyLogs = {};
+          appState.takenLogs = {};
+          appState.weeklyLogs = {};
           saveCloudState();
           renderApp();
           calculateTimesAndReminders();
           showToast("🧹 本週紀錄已成功歸零");
         }
       });
-    };
+    }
 
-    window.requestLockSettings = function() {
-      window.appState.isUnlocked = false;
+    function requestLockSettings() {
+      appState.isUnlocked = false;
       showToast("🔒 設定與編輯面板已安全鎖定");
       switchView('day');
-    };
+    }
 
-    window.updateSystemPassword = function() {
+    function updateSystemPassword() {
       const newPwd = document.getElementById('editPassword').value.trim();
       if (!/^\d{6,8}$/.test(newPwd)) {
         showToast("⚠️ 密碼必須為 6 ~ 8 位數純數字！", "warning");
         return;
       }
-      window.appState.password = newPwd;
+      appState.password = newPwd;
       saveCloudState();
       document.getElementById('editPassword').value = "";
       showToast("🔑 安全管理密碼已成功變更！");
-    };
+    }
 
     function openPasswordModal(successCallback) {
-      window.tempInputPass = "";
-      window.postPasswordSuccessCallback = successCallback;
+      tempInputPass = "";
+      postPasswordSuccessCallback = successCallback;
       updatePasswordDots();
       document.getElementById('passwordModal').classList.remove('hidden');
     }
 
-    window.closePasswordModal = function() {
+    function closePasswordModal() {
       document.getElementById('passwordModal').classList.add('hidden');
-      window.tempInputPass = "";
-    };
+      tempInputPass = "";
+    }
 
-    window.pressPassKey = function(key) {
+    function pressPassKey(key) {
       if (key === 'C') {
-        window.tempInputPass = "";
+        tempInputPass = "";
       } else if (key === 'Backspace') {
-        window.tempInputPass = window.tempInputPass.slice(0, -1);
+        tempInputPass = tempInputPass.slice(0, -1);
       } else {
-        if (window.tempInputPass.length < 8) {
-          window.tempInputPass += key;
+        if (tempInputPass.length < 8) {
+          tempInputPass += key;
         }
       }
       updatePasswordDots();
-    };
+    }
 
     function updatePasswordDots() {
       const dotsContainer = document.getElementById('passwordDots');
       let html = "";
       for (let i = 0; i < 8; i++) {
-        if (i < window.tempInputPass.length) {
+        if (i < tempInputPass.length) {
           html += `<span class="w-5 h-5 rounded-full bg-brand-700 border-2 border-brand-700"></span>`;
         } else {
           html += `<span class="w-5 h-5 rounded-full border-2 border-slate-300 bg-transparent"></span>`;
@@ -1239,58 +1240,41 @@
       dotsContainer.innerHTML = html;
     }
 
-    window.submitPassCode = function() {
-      if (window.tempInputPass === window.appState.password) {
+    function submitPassCode() {
+      if (tempInputPass === appState.password) {
         closePasswordModal();
         showToast("🔓 密碼驗證成功！");
         
         // 核心解鎖重構：將管理端解鎖設為 true，並立即刷新導航欄
-        window.appState.isUnlocked = true;
-        window.adminData.isAdminMode = true;
+        appState.isUnlocked = true;
+        adminData.isAdminMode = true;
         setupModeUI();
 
         // 💡 登入成功後，直接進入「設定編輯頁面」，徹底避免進去後不知道去哪裡點擊
         switchViewDirectly('edit');
 
-        if (window.postPasswordSuccessCallback) {
-          window.postPasswordSuccessCallback();
+        if (postPasswordSuccessCallback) {
+          postPasswordSuccessCallback();
         }
       } else {
         showToast("❌ 密碼不正確，請重新輸入", "warning");
-        window.tempInputPass = "";
+        tempInputPass = "";
         updatePasswordDots();
       }
-    };
-
-    // 💡 電腦端實體鍵盤監聽事件 (高度流暢、完美支援 Enter 送出，數字鍵登打)
-    window.addEventListener('keydown', function(event) {
-      const modal = document.getElementById('passwordModal');
-      if (modal && !modal.classList.contains('hidden')) {
-        const key = event.key;
-        if (/^[0-9]$/.test(key)) {
-          window.pressPassKey(key);
-        } else if (key === 'Backspace' || key === 'Delete') {
-          window.pressPassKey('Backspace');
-        } else if (key === 'Enter') {
-          window.submitPassCode();
-        } else if (key === 'Escape') {
-          window.closePasswordModal();
-        }
-      }
-    });
+    }
 
     // 視圖切換
-    window.switchView = function(viewName) {
+    function switchView(viewName) {
       if (viewName === 'edit') {
         requestAccessToSettings();
       } else if (viewName === 'admin') {
-        if (window.appState.isUnlocked) {
+        if (appState.isUnlocked) {
           switchViewDirectly('admin');
         } else {
           document.getElementById('passwordModalTitle').textContent = "親友管理中心驗證";
           openPasswordModal(function() {
-            window.appState.isUnlocked = true;
-            window.adminData.isAdminMode = true;
+            appState.isUnlocked = true;
+            adminData.isAdminMode = true;
             setupModeUI();
             switchViewDirectly('admin');
           });
@@ -1298,7 +1282,7 @@
       } else {
         switchViewDirectly(viewName);
       }
-    };
+    }
 
     function switchViewDirectly(viewName) {
       const dayView = document.getElementById('dayView');
@@ -1345,7 +1329,7 @@
     let editorSchedule = [];
 
     function renderEditor() {
-      editorSchedule = JSON.parse(JSON.stringify(window.appState.schedule));
+      editorSchedule = JSON.parse(JSON.stringify(appState.schedule));
       renderEditorSlots();
     }
 
@@ -1429,11 +1413,11 @@
       container.innerHTML = html;
     }
 
-    window.updateEditorSlotField = function(sIdx, field, val) {
+    function updateEditorSlotField(sIdx, field, val) {
       editorSchedule[sIdx][field] = val;
-    };
+    }
 
-    window.addNewSlot = function() {
+    function addNewSlot() {
       editorSchedule.push({
         id: "slot-" + Date.now(),
         name: "自訂時段",
@@ -1442,14 +1426,14 @@
         items: []
       });
       renderEditorSlots();
-    };
+    }
 
-    window.removeEditorSlot = function(sIdx) {
+    function removeEditorSlot(sIdx) {
       editorSchedule.splice(sIdx, 1);
       renderEditorSlots();
-    };
+    }
 
-    window.addEditorItem = function(sIdx) {
+    function addEditorItem(sIdx) {
       editorSchedule[sIdx].items.push({
         id: "item-" + Date.now(),
         name: "新藥名",
@@ -1459,18 +1443,18 @@
         sideEffect: ""
       });
       renderEditorSlots();
-    };
+    }
 
-    window.removeEditorItem = function(sIdx, iIdx) {
+    function removeEditorItem(sIdx, iIdx) {
       editorSchedule[sIdx].items.splice(iIdx, 1);
       renderEditorSlots();
-    };
+    }
 
-    window.updateEditorItemField = function(sIdx, iIdx, field, val) {
+    function updateEditorItemField(sIdx, iIdx, field, val) {
       editorSchedule[sIdx].items[iIdx][field] = val;
-    };
+    }
 
-    window.saveEditorConfig = function() {
+    function saveEditorConfig() {
       for (let i = 0; i < editorSchedule.length; i++) {
         if (!editorSchedule[i].name.trim() || !editorSchedule[i].time.trim()) {
           showToast("⚠️ 請務必填寫時段名稱與時間！", "warning");
@@ -1478,28 +1462,28 @@
         }
       }
 
-      window.appState.username = document.getElementById('editUsername').value.trim() || "陳大朋";
-      window.appState.schedule = JSON.parse(JSON.stringify(editorSchedule));
+      appState.username = document.getElementById('editUsername').value.trim() || "陳大朋";
+      appState.schedule = JSON.parse(JSON.stringify(editorSchedule));
       
       saveCloudState();
       renderApp();
       calculateTimesAndReminders();
       showToast("💾 用藥規劃設定已儲存並同步！");
       switchView('day');
-    };
+    }
 
-    window.exportConfig = function() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
+    function exportConfig() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `頤寧範本_${window.appState.username}.json`);
+      downloadAnchor.setAttribute("download", `頤寧範本_${appState.username}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
       showToast("📥 範本設定檔案已成功下載，可用於其他藥盒匯入！");
-    };
+    }
 
-    window.importConfig = function(event) {
+    function importConfig(event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -1519,213 +1503,34 @@
         }
       };
       reader.readAsText(file);
-    };
-
-    function showToast(text, type = "success") {
-      const toast = document.getElementById('toastMessage');
-      const icon = document.getElementById('toastIcon');
-      const textEl = document.getElementById('toastText');
-
-      if (type === "success") {
-        icon.textContent = "✅";
-        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-100 transform translate-y-0 pointer-events-auto transition-all duration-300 z-50 flex items-center gap-2 border border-emerald-500/20";
-      } else {
-        icon.textContent = "⚠️";
-        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-rose-950 text-rose-100 text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-100 transform translate-y-0 pointer-events-auto transition-all duration-300 z-50 flex items-center gap-2 border border-rose-500/30";
-      }
-
-      textEl.textContent = text;
-
-      setTimeout(() => {
-        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2";
-      }, 3000);
     }
 
-    // 計算倒計時及藥物大綱邏輯 (維持背景精準計算)
-    function calculateTimesAndReminders() {
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const todayStr = getTodayStr();
-
-      if (!window.appState.schedule || window.appState.schedule.length === 0) return;
-
-      const validSlots = window.appState.schedule
-        .filter(s => s.time && s.time !== "隨時")
-        .map(s => {
-          const [h, m] = s.time.split(':').map(Number);
-          return {
-            ...s,
-            totalMinutes: h * 60 + m
-          };
-        });
-
-      validSlots.sort((a, b) => a.totalMinutes - b.totalMinutes);
-
-      if (validSlots.length === 0) return;
-
-      let currentActiveSlot = null;
-      let prevSlot = null;
-      let nextSlot = null;
-      let currentSlotIndex = 0;
-
-      if (currentMinutes >= validSlots[validSlots.length - 1].totalMinutes || currentMinutes < validSlots[0].totalMinutes) {
-        currentSlotIndex = validSlots.length - 1;
-      } else {
-        for (let i = 0; i < validSlots.length - 1; i++) {
-          if (currentMinutes >= validSlots[i].totalMinutes && currentMinutes < validSlots[i+1].totalMinutes) {
-            currentSlotIndex = i;
-            break;
-          }
-        }
-      }
-
-      currentActiveSlot = validSlots[currentSlotIndex];
-      
-      const prevIndex = (currentSlotIndex - 1 + validSlots.length) % validSlots.length;
-      prevSlot = validSlots[prevIndex];
-
-      const nextIndex = (currentSlotIndex + 1) % validSlots.length;
-      nextSlot = validSlots[nextIndex];
-
-      // === 1. 上一次服藥過去多久 ===
-      const prevSlotNameEl = document.getElementById('prevSlotName');
-      const prevSlotTimeTagEl = document.getElementById('prevSlotTimeTag');
-      const prevDoseElapsedEl = document.getElementById('prevDoseElapsed');
-
-      if (prevSlot) {
-        prevSlotNameEl.textContent = prevSlot.name;
-        prevSlotTimeTagEl.textContent = prevSlot.time;
-        
-        let elapsedMins = currentMinutes - prevSlot.totalMinutes;
-        if (elapsedMins < 0) elapsedMins += 1440;
-        const h = Math.floor(elapsedMins / 60);
-        const m = elapsedMins % 60;
-        prevDoseElapsedEl.textContent = h > 0 ? `已過 ${h} 小時 ${m} 分鐘` : `已過 ${m} 分鐘`;
-        renderMedicationListOnly('prevMedicationsList', prevSlot.items);
-      }
-
-      // === 2. 當下進行中時段 ===
-      const currentSlotNameEl = document.getElementById('currentSlotName');
-      const currentSlotTimeTagEls = document.querySelectorAll('#currentSlotTimeTag');
-      const isTakenToday = window.appState.takenLogs[todayStr]?.[currentActiveSlot.id];
-      const takeBtn = document.getElementById('takeButton');
-
-      if (currentActiveSlot) {
-        currentSlotNameEl.textContent = currentActiveSlot.name;
-        currentSlotTimeTagEls.forEach(el => el.textContent = currentActiveSlot.time);
-        renderMedicationListOnly('currentMedicationsList', currentActiveSlot.items);
-
-        if (isTakenToday) {
-          takeBtn.className = "w-full h-16 bg-slate-300 text-slate-600 font-extrabold text-xl rounded-2xl transition-all flex items-center justify-center gap-3 cursor-not-allowed shadow-none border-2 border-slate-300";
-          takeBtn.innerHTML = `
-            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            已於 ${isTakenToday} 服用完成
-          `;
-          takeBtn.disabled = true;
-        } else {
-          takeBtn.className = "w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer";
-          takeBtn.innerHTML = `
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-            </svg>
-            確認此時段已服藥
-          `;
-          takeBtn.disabled = false;
-          takeBtn.onclick = function() { markCurrentSlotAsTaken(currentActiveSlot.id) };
-        }
-      }
-
-      // === 3. 後一階段還有多久 ===
-      const nextSlotNameEl = document.getElementById('nextSlotName');
-      const nextSlotTimeTagEl = document.getElementById('nextSlotTimeTag');
-      const nextDoseTargetTimeEl = document.getElementById('nextDoseTargetTime');
-      const nextDoseCountdownEl = document.getElementById('nextDoseCountdown');
-
-      if (nextSlot) {
-        nextSlotNameEl.textContent = nextSlot.name;
-        nextSlotTimeTagEl.textContent = nextSlot.time;
-
-        let remainMins = nextSlot.totalMinutes - currentMinutes;
-        if (remainMins <= 0) remainMins += 1440;
-        const h = Math.floor(remainMins / 60);
-        const m = remainMins % 60;
-        
-        nextDoseTargetTimeEl.textContent = h > 0 ? `還有 ${h} 小時 ${m} 分鐘` : `還有 ${m} 分鐘`;
-        nextDoseCountdownEl.textContent = `${h}小時 ${m}分`;
-        renderMedicationListOnly('nextMedicationsList', nextSlot.items);
-      }
-    }
-
-    // 精簡藥品列表渲染
-    function renderMedicationListOnly(elementId, items) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-
-      if (el.getAttribute('data-loaded-slot') === JSON.stringify(items)) {
-        return;
-      }
-      el.setAttribute('data-loaded-slot', JSON.stringify(items));
-
-      if (!items || items.length === 0) {
-        el.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center font-bold">無藥物安排</p>`;
-        return;
-      }
-
-      let html = "";
-      items.forEach(item => {
-        let badgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-200";
-        let typeName = "保健";
-        if (item.type === "medicine") {
-          badgeStyle = "bg-indigo-50 text-indigo-800 border-indigo-200";
-          typeName = "處方藥";
-        } else if (item.type === "medicine-prn") {
-          badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
-          typeName = "備用";
-        }
-
-        html += `
-          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div class="flex justify-between items-center gap-1">
-              <span class="fluid-meta font-black text-slate-900">${item.name}</span>
-              <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded ${badgeStyle}">${typeName} (${item.dosage})</span>
-            </div>
-            <p class="text-xs text-slate-500 line-clamp-2"><strong class="text-slate-700">效：</strong>${item.effect}</p>
-            ${item.sideEffect ? `<p class="text-[11px] text-rose-500 leading-tight"><strong class="text-rose-600">⚠：</strong>${item.sideEffect}</p>` : ''}
-          </div>
-        `;
-      });
-      el.innerHTML = html;
-    }
-
-    // 時間刷新器
-    function initClock() {
-      function tick() {
-        const now = new Date();
-        const hrs = String(now.getHours()).padStart(2, '0');
-        const mins = String(now.getMinutes()).padStart(2, '0');
-        const secs = String(now.getSeconds()).padStart(2, '0');
-        
-        const clockEl = document.getElementById('liveClock');
-        if (clockEl) clockEl.textContent = `${hrs}:${mins}:${secs}`;
-        
-        const days = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-        const dateEl = document.getElementById('liveDate');
-        if (dateEl) {
-          dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${days[now.getDay()]}`;
-        }
-
-        calculateTimesAndReminders();
-      }
-      tick();
-      setInterval(tick, 1000);
-    }
-
-    function getTodayStr() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
+    // 暴露所有函數至 window 物件，確保 HTML inline onclick 100% 正常調用
+    window.createNewRelativeBox = createNewRelativeBox;
+    window.setAsManager = setAsManager;
+    window.switchActiveEditingBox = switchActiveEditingBox;
+    window.copyRelativeShareLink = copyRelativeShareLink;
+    window.deleteRelativeBox = deleteRelativeBox;
+    window.applyPrebuiltTemplate = applyPrebuiltTemplate;
+    window.markCurrentSlotAsTaken = markCurrentSlotAsTaken;
+    window.toggleWeeklyDose = toggleWeeklyDose;
+    window.requestAccessToSettings = requestAccessToSettings;
+    window.requestResetWeeklyLogs = requestResetWeeklyLogs;
+    window.requestLockSettings = requestLockSettings;
+    window.updateSystemPassword = updateSystemPassword;
+    window.pressPassKey = pressPassKey;
+    window.closePasswordModal = closePasswordModal;
+    window.submitPassCode = submitPassCode;
+    window.switchView = switchView;
+    window.exportConfig = exportConfig;
+    window.importConfig = importConfig;
+    window.updateEditorSlotField = updateEditorSlotField;
+    window.addNewSlot = addNewSlot;
+    window.removeEditorSlot = removeEditorSlot;
+    window.addEditorItem = addEditorItem;
+    window.removeEditorItem = removeEditorItem;
+    window.updateEditorItemField = updateEditorItemField;
+    window.saveEditorConfig = saveEditorConfig;
   </script>
 </body>
 </html>
