@@ -48,11 +48,10 @@
       font-size: var(--fluid-body);
     }
 
-    /* 💡 核心修復：強制允許所有輸入欄位與選擇器可點擊、選取、聚焦與修改，絕不卡死 */
+    /* 強制允許所有輸入欄位與選擇器可點擊、選取、聚焦與修改，絕不鎖死 */
     input, select, textarea, button {
       user-select: text !important;
       -webkit-user-select: text !important;
-      cursor: pointer;
     }
 
     * {
@@ -106,17 +105,17 @@
 
       <!-- 頂部大按鈕切換列 -->
       <nav class="bg-brand-700 p-1.5 rounded-2xl flex w-full lg:w-auto shadow-inner border border-brand-600" id="navTabsContainer">
-        <button id="btnDayView" onclick="switchView('day')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
           📅 一日
         </button>
-        <button id="btnWeekView" onclick="switchView('week')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           🗓️ 一週
         </button>
         <!-- 管理員核心控制鍵 (在管理者網頁時預設永遠顯現) -->
-        <button id="btnAdminView" onclick="switchView('admin')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnAdminView" onclick="window.switchView('admin')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           👑 親友管理
         </button>
-        <button id="btnEditView" onclick="switchView('edit')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           ⚙️ 藥盒編輯規劃
         </button>
       </nav>
@@ -136,7 +135,7 @@
         </div>
       </div>
       <div class="flex gap-2">
-        <button onclick="switchView('admin')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all whitespace-nowrap">
+        <button type="button" onclick="window.switchView('admin')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all whitespace-nowrap">
           進入親友管理中心 ➔
         </button>
       </div>
@@ -152,7 +151,7 @@
           <div>
             <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm font-bold">即時監控中</span>
             <div class="text-4xl sm:text-5xl font-black mt-2 tracking-tight" id="liveClock">00:00:00</div>
-            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate">2026年5月25日 星期一</div>
+            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate font-bold">2026年5月25日 星期一</div>
           </div>
           <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-3 md:pt-0">
             <span class="fluid-meta text-slate-300 block font-bold">⏱️ 距離下一個時段還要：</span>
@@ -204,7 +203,7 @@
             </div>
           </div>
           <div class="pt-4 mt-4 border-t border-slate-100">
-            <button onclick="markCurrentSlotAsTaken()" id="takeButton" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3">
+            <button type="button" onclick="window.markCurrentSlotAsTaken()" id="takeButton" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3">
               <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
               </svg>
@@ -250,7 +249,7 @@
             <h2 class="fluid-title text-slate-800 font-bold">🗓️ 一週服藥進度打卡卡片</h2>
             <p class="text-xs text-slate-500 mt-1">點擊下方時段圓點可補登或更正用藥狀態</p>
           </div>
-          <button id="resetWeeklyLogBtn" onclick="requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all font-bold">
+          <button type="button" id="resetWeeklyLogBtn" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all font-bold">
             ⚠️ 歸零本週紀錄
           </button>
         </div>
@@ -260,7 +259,7 @@
       </div>
     </div>
 
-    <!-- 視圖4: 親友與管理中心 -->
+    <!-- 視圖4: 親友管理中心 -->
     <div id="adminView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-6 w-full">
       <div class="border-b border-slate-100 pb-4">
         <h2 class="fluid-title text-slate-800 flex items-center gap-2 font-black">👑 親友管理中心</h2>
@@ -280,7 +279,7 @@
             <input type="text" id="newRelativeBoxId" placeholder="僅限英文數字" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base">
           </div>
           <div class="flex items-end">
-            <button onclick="createNewRelativeBox()" class="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-sm shadow-md transition-all font-bold">
+            <button type="button" onclick="window.createNewRelativeBox()" class="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-sm shadow-md transition-all font-bold">
               建立獨立藥盒
             </button>
           </div>
@@ -296,7 +295,7 @@
       </div>
 
       <div class="pt-4 border-t border-slate-100">
-        <button onclick="requestLockSettings()" class="w-full h-14 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-2">
+        <button type="button" onclick="window.requestLockSettings()" class="w-full h-14 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-2">
           ⬅️ 返回用藥追蹤主頁
         </button>
       </div>
@@ -310,7 +309,7 @@
           <p class="text-xs text-slate-500 mt-1">您可以自由新增、編輯、刪除時段或任何用藥品項。</p>
         </div>
         <!-- 返回用藥追蹤的頂部按鈕 -->
-        <button onclick="requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-5 py-3 rounded-2xl border border-slate-300 text-base shadow-sm transition-all flex items-center gap-1.5 font-bold">
+        <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-5 py-3 rounded-2xl border border-slate-300 text-base shadow-sm transition-all flex items-center gap-1.5 font-bold">
           ⬅️ 返回用藥追蹤
         </button>
       </div>
@@ -325,7 +324,7 @@
           <label class="block text-sm font-black text-slate-700 mb-1">變更管理密碼 (6~8位數字)</label>
           <div class="flex gap-2">
             <input type="password" id="editPassword" placeholder="輸入新密碼" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base">
-            <button onclick="updateSystemPassword()" class="bg-brand-600 hover:bg-brand-500 text-white font-black px-4 rounded-xl text-sm transition-all whitespace-nowrap font-bold">
+            <button type="button" onclick="window.updateSystemPassword()" class="bg-brand-600 hover:bg-brand-500 text-white font-black px-4 rounded-xl text-sm transition-all whitespace-nowrap font-bold">
               更新密碼
             </button>
           </div>
@@ -339,10 +338,10 @@
         </h4>
         <p class="text-xs text-indigo-800">如果紀錄遺失或清空，點擊下方即可瞬時載入您上傳的最終規劃版本：</p>
         <div class="flex flex-wrap gap-2">
-          <button onclick="applyPrebuiltTemplate('statins')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
+          <button type="button" onclick="window.applyPrebuiltTemplate('statins')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
             ⭐ 妥寧睡前服與補鈣葉黃素規劃 (最終版)
           </button>
-          <button onclick="applyPrebuiltTemplate('simple')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
+          <button type="button" onclick="window.applyPrebuiltTemplate('simple')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all">
             ⭐ 簡易三餐飯後基本用藥
           </button>
         </div>
@@ -352,13 +351,13 @@
       <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
         <span class="text-xs text-slate-500 font-bold">備份/範本檔案管理:</span>
         <div class="flex gap-2">
-          <button onclick="exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all font-bold">
+          <button type="button" onclick="window.exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all font-bold">
             📥 匯出當前配置
           </button>
           <label for="importFile" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all font-bold">
             📤 匯入範本檔案
           </label>
-          <input type="file" id="importFile" class="hidden" accept=".json" onchange="importConfig(event)">
+          <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
         </div>
       </div>
 
@@ -366,21 +365,21 @@
       <div class="space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h3 class="fluid-subtitle text-slate-800 font-black">服藥時段與藥物設定</h3>
-          <button onclick="addNewSlot()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all font-bold">
+          <button type="button" onclick="window.addNewSlot()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all font-bold">
             ➕ 新增用藥時段
           </button>
         </div>
-        <div id="editorSlotsContainer" class="space-y-4 w-full">
+        <div id="editorSlotsContainer" class="space-y-4 w-full font-bold">
           <!-- 編輯模組動態生成 -->
         </div>
       </div>
 
       <!-- 儲存與返回按鍵 -->
       <div class="pt-5 border-t border-slate-100 flex gap-3">
-        <button onclick="requestLockSettings()" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 text-base border border-slate-200 transition-all">
+        <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 text-base border border-slate-200 transition-all">
           ⬅️ 取消並返回藥盒主頁
         </button>
-        <button onclick="saveEditorConfig()" class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-md transition-all font-bold">
+        <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-md transition-all font-bold">
           💾 儲存修改並套用
         </button>
       </div>
@@ -409,20 +408,20 @@
         </div>
       </div>
       <div class="grid grid-cols-3 gap-3">
-        <button onclick="pressPassKey('1')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">1</button>
-        <button onclick="pressPassKey('2')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">2</button>
-        <button onclick="pressPassKey('3')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">3</button>
-        <button onclick="pressPassKey('4')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">4</button>
-        <button onclick="pressPassKey('5')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">5</button>
-        <button onclick="pressPassKey('6')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">6</button>
-        <button onclick="pressPassKey('7')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">7</button>
-        <button onclick="pressPassKey('8')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">8</button>
-        <button onclick="pressPassKey('9')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">9</button>
-        <button onclick="pressPassKey('C')" class="h-14 bg-rose-50 text-rose-600 font-bold text-lg rounded-2xl active:bg-rose-100">清除</button>
-        <button onclick="pressPassKey('0')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">0</button>
-        <button onclick="submitPassCode()" class="h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-2xl shadow-md active:bg-emerald-700 font-bold">確定</button>
+        <button type="button" onclick="window.pressPassKey('1')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">1</button>
+        <button type="button" onclick="window.pressPassKey('2')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">2</button>
+        <button type="button" onclick="window.pressPassKey('3')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">3</button>
+        <button type="button" onclick="window.pressPassKey('4')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">4</button>
+        <button type="button" onclick="window.pressPassKey('5')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">5</button>
+        <button type="button" onclick="window.pressPassKey('6')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">6</button>
+        <button type="button" onclick="window.pressPassKey('7')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">7</button>
+        <button type="button" onclick="window.pressPassKey('8')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">8</button>
+        <button type="button" onclick="window.pressPassKey('9')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">9</button>
+        <button type="button" onclick="window.pressPassKey('C')" class="h-14 bg-rose-50 text-rose-600 font-bold text-lg rounded-2xl active:bg-rose-100">清除</button>
+        <button type="button" onclick="window.pressPassKey('0')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">0</button>
+        <button type="button" onclick="window.submitPassCode()" class="h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-2xl shadow-md active:bg-emerald-700 font-bold font-bold">確定</button>
       </div>
-      <button onclick="closePasswordModal()" class="w-full h-11 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm transition-all mt-2">
+      <button type="button" onclick="window.closePasswordModal()" class="w-full h-11 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm transition-all mt-2">
         返回主畫面
       </button>
     </div>
@@ -430,7 +429,7 @@
 
   <!-- ⚙️ 頁尾管理端快速入口 (親友獨立模式時自動隱藏) -->
   <div id="adminFooterEntry" class="w-full flex justify-center py-4 bg-slate-200 border-t border-slate-300">
-    <button onclick="switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all">
+    <button type="button" onclick="window.switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all">
       ⚙️ 進入管理員模式
     </button>
   </div>
@@ -487,7 +486,7 @@
         description: "就寢前30分鐘",
         items: [
           { id: "item-4-1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "1 顆", effect: "長效型降血脂藥物(Atorvastatin)，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定於睡前服用效果佳，且避開忙碌時段防漏藥。" },
-          { id: "item-4-2", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油完美間隔12小時，完全避免與魚油脂肪酸產生皂化反應，吸收率極大化。" }
+          { id: "item-4-2", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油完美間隔12小時，完全避免與魚油中的脂肪酸產生皂化反應，吸收率極大化。" }
         ]
       },
       {
@@ -554,6 +553,7 @@
     window.auth = null;
     const appId = 'yining-med-tracker';
     let currentFirestoreUnsubscribe = null;
+    let editorSchedule = []; // 編輯專用記憶暫存
 
     // Firebase 真實配置連線
     let firebaseConfig = {
@@ -838,7 +838,7 @@
 
     // ================= 管理員主控台操作邏輯 =================
 
-    // 快速新增親友藥盒 (同時初始化其對應之 offline 資料夾，保證新增立即生效可編輯)
+    // 快速新增親友藥盒
     function createNewRelativeBox() {
       const nameInput = document.getElementById('newRelativeName');
       const boxIdInput = document.getElementById('newRelativeBoxId');
@@ -909,7 +909,7 @@
       }
     }
 
-    // 渲染管理清單
+    // 渲染管理親友清單
     function renderRelativesList() {
       const container = document.getElementById('relativesListContainer');
       if (!container) return;
@@ -938,10 +938,10 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="switchActiveEditingBox('${rBoxId}')" class="h-12 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm rounded-xl transition-all font-bold">
+              <button type="button" onclick="window.switchActiveEditingBox('${rBoxId}')" class="h-12 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm rounded-xl transition-all font-bold">
                 ⚙️ 編輯規劃
               </button>
-              <button onclick="copyRelativeShareLink('${rBoxId}')" class="h-12 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-xs rounded-xl transition-all">
+              <button type="button" onclick="window.copyRelativeShareLink('${rBoxId}')" class="h-12 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-extrabold text-xs rounded-xl transition-all font-bold">
                 🔗 複製分享連結
               </button>
             </div>
@@ -949,13 +949,13 @@
             <div class="flex justify-between items-center pt-2 border-t border-dashed border-slate-100">
               <!-- 👑 指定管理者切換按鈕 -->
               ${!isManager ? `
-                <button onclick="setAsManager('${rBoxId}')" class="text-xs text-amber-600 hover:text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg font-black border border-amber-200 transition-all font-bold">
+                <button type="button" onclick="window.setAsManager('${rBoxId}')" class="text-xs text-amber-600 hover:text-amber-700 bg-amber-50 px-2.5 py-1.5 rounded-lg font-black border border-amber-200 transition-all font-bold">
                   👑 設為管理者
                 </button>
               ` : '<span class="text-xs text-slate-400 font-bold">預設代入之藥盒</span>'}
 
               ${rBoxId !== 'admin_self' ? `
-                <button onclick="deleteRelativeBox('${rBoxId}', '${rName}')" class="text-xs text-rose-500 hover:text-rose-700 font-bold">
+                <button type="button" onclick="window.deleteRelativeBox('${rBoxId}', '${rName}')" class="text-xs text-rose-500 hover:text-rose-700 font-bold">
                   ✕ 移除藥盒
                 </button>
               ` : ''}
@@ -1124,15 +1124,15 @@
               </div>
               <div>
                 ${isTaken 
-                  ? `<span class="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-bold">✓已服 ${isTaken}</span>`
-                  : `<button onclick="markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200 font-bold">打卡</button>`
+                  ? `<span class="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-bold font-bold">✓已服 ${isTaken}</span>`
+                  : `<button type="button" onclick="window.markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200 font-bold font-bold">打卡</button>`
                 }
               </div>
             </div>
-            <div class="text-xs text-slate-500 font-bold">${slot.description || '無詳細說明'}</div>
+            <div class="text-xs text-slate-500 font-bold font-bold">${slot.description || '無詳細說明'}</div>
             <div class="border-t border-dashed border-slate-200 pt-1.5 space-y-1">
               ${(slot.items || []).map(item => `
-                <div class="text-xs text-slate-700 flex justify-between font-bold">
+                <div class="text-xs text-slate-700 flex justify-between font-bold font-bold">
                   <span>• <strong>${item.name}</strong></span>
                   <span class="text-[10px] text-slate-400 font-bold font-bold">x${item.dosage}</span>
                 </div>
@@ -1167,7 +1167,7 @@
         html += `
           <div class="bg-slate-50 rounded-2xl py-3 px-1 border-2 ${isToday ? 'border-brand-500 bg-brand-50/20' : 'border-slate-200'} flex flex-col items-center">
             <div class="text-center border-b border-slate-200 pb-1.5 w-full">
-              <span class="text-xs font-black text-slate-400 block font-bold">週${daysOfWeek[i]}</span>
+              <span class="text-xs font-black text-slate-400 block font-bold font-bold">週${daysOfWeek[i]}</span>
               <span class="fluid-meta font-black ${isToday ? 'text-brand-600' : 'text-slate-700'}">${loopDate.getDate()}</span>
             </div>
 
@@ -1175,7 +1175,7 @@
               ${window.appState.schedule.map(slot => {
                 const isTaken = window.appState.takenLogs[dateStr]?.[slot.id];
                 return `
-                  <div onclick="toggleWeeklyDose('${dateStr}', '${slot.id}')" class="flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95">
+                  <div onclick="window.toggleWeeklyDose('${dateStr}', '${slot.id}')" class="flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95">
                     <span class="text-[10px] text-slate-500 font-bold mb-1">${slot.name.substring(0, 2)}</span>
                     <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isTaken ? 'bg-emerald-500 text-white border-emerald-500 shadow' : 'bg-white text-slate-300 border-slate-300'}">
                       ${isTaken 
@@ -1185,7 +1185,7 @@
                         : `<span class="text-sm font-black">+</span>`
                       }
                     </div>
-                    ${isTaken ? `<span class="text-[10px] text-emerald-600 font-bold mt-1">${isTaken}</span>` : '<span class="text-[10px] text-transparent mt-1">-</span>'}
+                    ${isTaken ? `<span class="text-[10px] text-emerald-600 font-bold mt-1 font-bold">${isTaken}</span>` : '<span class="text-[10px] text-transparent mt-1 font-bold">-</span>'}
                   </div>
                 `;
               }).join('')}
@@ -1224,7 +1224,6 @@
 
     // 密碼安全解鎖 (九宮格按鍵)
     function requestAccessToSettings() {
-      // 💡 體驗提升：改用 localStorage 記住解鎖狀態，管理者本機不需要每次都重複打密碼
       if (localStorage.getItem('yining_is_unlocked_v3') === 'true') {
         switchViewDirectly('edit');
       } else {
@@ -1386,8 +1385,8 @@
       if (editView) editView.classList.add('hidden');
       if (adminView) adminView.classList.add('hidden');
 
-      const normalClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white";
-      const activeClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white";
+      const normalClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
+      const activeClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
       
       if (btnDay) btnDay.className = normalClass;
       if (btnWeek) btnWeek.className = normalClass;
@@ -1412,8 +1411,6 @@
     }
 
     // ================= 編輯與管理控制 =================
-    let editorSchedule = [];
-
     function renderEditor() {
       editorSchedule = JSON.parse(JSON.stringify(window.appState.schedule));
       renderEditorSlots();
@@ -1421,54 +1418,57 @@
 
     function renderEditorSlots() {
       const container = document.getElementById('editorSlotsContainer');
+      if (!container) return;
       let html = "";
 
       editorSchedule.forEach((slot, sIdx) => {
+        if (!slot.items) slot.items = [];
+
         html += `
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3">
-            <button onclick="removeEditorSlot(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg">
+            <button type="button" onclick="window.removeEditorSlot(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg font-bold">
               ✕ 刪除時段
             </button>
 
             <div class="space-y-2.5 pt-4">
               <div>
                 <label class="block text-xs font-black text-slate-400 mb-0.5">時段名稱 (例: 早餐後)</label>
-                <input type="text" value="${slot.name}" onchange="updateEditorSlotField(${sIdx}, 'name', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <input type="text" value="${slot.name}" onchange="window.updateEditorSlotField(${sIdx}, 'name', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時間 (例: 08:30)</label>
-                  <input type="text" value="${slot.time}" onchange="updateEditorSlotField(${sIdx}, 'time', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <input type="text" value="${slot.time}" onchange="window.updateEditorSlotField(${sIdx}, 'time', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時段備註</label>
-                  <input type="text" value="${slot.description || ''}" onchange="updateEditorSlotField(${sIdx}, 'description', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <input type="text" value="${slot.description || ''}" onchange="window.updateEditorSlotField(${sIdx}, 'description', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
               </div>
             </div>
 
             <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
               <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-600 font-bold font-bold">本時段用藥細項</h4>
-                <button onclick="addEditorItem(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
+                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
+                <button type="button" onclick="window.addEditorItem(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
                   ＋ 新增藥品/食品
                 </button>
               </div>
 
               <div class="space-y-2">
-                ${(slot.items || []).map((item, iIdx) => `
+                ${slot.items.map((item, iIdx) => `
                   <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 relative">
-                    <button onclick="removeEditorItem(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500">
+                    <button type="button" onclick="window.removeEditorItem(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500">
                       ✕
                     </button>
                     <div>
                       <label class="block text-[10px] font-bold text-slate-400">藥名/品項名稱</label>
-                      <input type="text" value="${item.name}" onchange="updateEditorItemField(${sIdx}, ${iIdx}, 'name', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.name}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'name', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                       <div>
                         <label class="block text-[10px] font-bold text-slate-400">類型</label>
-                        <select onchange="updateEditorItemField(${sIdx}, ${iIdx}, 'type', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'type', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                           <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
                           <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
                           <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
@@ -1476,16 +1476,16 @@
                       </div>
                       <div>
                         <label class="block text-[10px] font-bold text-slate-400">劑量</label>
-                        <input type="text" value="${item.dosage || ''}" onchange="updateEditorItemField(${sIdx}, ${iIdx}, 'dosage', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" value="${item.dosage || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'dosage', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                       </div>
                     </div>
                     <div>
                       <label class="block text-[10px] font-bold text-slate-400">主要效用</label>
-                      <input type="text" value="${item.effect || ''}" onchange="updateEditorItemField(${sIdx}, ${iIdx}, 'effect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.effect || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'effect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div>
                       <label class="block text-[10px] font-bold text-slate-400">注意事項/副作用</label>
-                      <input type="text" value="${item.sideEffect || ''}" onchange="updateEditorItemField(${sIdx}, ${iIdx}, 'sideEffect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.sideEffect || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'sideEffect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                   </div>
                 `).join('')}
@@ -1499,11 +1499,14 @@
       container.innerHTML = html;
     }
 
-    function updateEditorSlotField(sIdx, field, val) {
-      editorSchedule[sIdx][field] = val;
-    }
+    // 💡 補齊編輯 CRUD 各項函數，徹底杜絕 method-not-defined 死鎖 Bug
+    window.updateEditorSlotField = function(sIdx, field, val) {
+      if (editorSchedule[sIdx]) {
+        editorSchedule[sIdx][field] = val;
+      }
+    };
 
-    function addNewSlot() {
+    window.addNewSlot = function() {
       editorSchedule.push({
         id: "slot-" + Date.now(),
         name: "自訂時段",
@@ -1512,14 +1515,14 @@
         items: []
       });
       renderEditorSlots();
-    }
+    };
 
-    function removeEditorSlot(sIdx) {
+    window.removeEditorSlot = function(sIdx) {
       editorSchedule.splice(sIdx, 1);
       renderEditorSlots();
-    }
+    };
 
-    function addEditorItem(sIdx) {
+    window.addEditorItem = function(sIdx) {
       if (!editorSchedule[sIdx].items) {
         editorSchedule[sIdx].items = [];
       }
@@ -1532,18 +1535,22 @@
         sideEffect: ""
       });
       renderEditorSlots();
-    }
+    };
 
-    function removeEditorItem(sIdx, iIdx) {
-      editorSchedule[sIdx].items.splice(iIdx, 1);
-      renderEditorSlots();
-    }
+    window.removeEditorItem = function(sIdx, iIdx) {
+      if (editorSchedule[sIdx] && editorSchedule[sIdx].items) {
+        editorSchedule[sIdx].items.splice(iIdx, 1);
+        renderEditorSlots();
+      }
+    };
 
-    function updateEditorItemField(sIdx, iIdx, field, val) {
-      editorSchedule[sIdx].items[iIdx][field] = val;
-    }
+    window.updateEditorItemField = function(sIdx, iIdx, field, val) {
+      if (editorSchedule[sIdx] && editorSchedule[sIdx].items && editorSchedule[sIdx].items[iIdx]) {
+        editorSchedule[sIdx].items[iIdx][field] = val;
+      }
+    };
 
-    function saveEditorConfig() {
+    window.saveEditorConfig = function() {
       for (let i = 0; i < editorSchedule.length; i++) {
         if (!editorSchedule[i].name.trim() || !editorSchedule[i].time.trim()) {
           showToast("⚠️ 請務必填寫時段名稱與時間！", "warning");
@@ -1561,9 +1568,9 @@
       
       // 儲存完成後退回首頁一日追蹤
       switchViewDirectly('day');
-    }
+    };
 
-    function exportConfig() {
+    window.exportConfig = function() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
@@ -1572,9 +1579,9 @@
       downloadAnchor.click();
       downloadAnchor.remove();
       showToast("📥 範本設定檔案已成功下載，可用於其他藥盒匯入！");
-    }
+    };
 
-    function importConfig(event) {
+    window.importConfig = function(event) {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -1594,7 +1601,7 @@
         }
       };
       reader.readAsText(file);
-    }
+    };
 
     // 暴露所有核心交互函數至 window 物件，確保網頁各處 HTML 元素 100% 成功調用且絕不遺失
     window.createNewRelativeBox = createNewRelativeBox;
@@ -1613,15 +1620,6 @@
     window.closePasswordModal = closePasswordModal;
     window.submitPassCode = submitPassCode;
     window.switchView = switchView;
-    window.exportConfig = exportConfig;
-    window.importConfig = importConfig;
-    window.updateEditorSlotField = updateEditorSlotField;
-    window.addNewSlot = addNewSlot;
-    window.removeEditorSlot = removeEditorSlot;
-    window.addEditorItem = addEditorItem;
-    window.removeEditorItem = removeEditorItem;
-    window.updateEditorItemField = updateEditorItemField;
-    window.saveEditorConfig = saveEditorConfig;
     window.switchViewDirectly = switchViewDirectly;
 
     // 倒計時及藥物提醒實時運算
@@ -1770,7 +1768,7 @@
 
         html += `
           <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div class="flex justify-between items-center gap-1">
+            <div class="flex justify-between items-center gap-1 font-bold">
               <span class="fluid-meta font-black text-slate-900">${item.name}</span>
               <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded ${badgeStyle}">${typeName} (${item.dosage})</span>
             </div>
