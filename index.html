@@ -35,7 +35,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
-      /* 液態無障礙字體：自動適應寬窄螢幕，字體放大且清晰，絕無兩側白邊 */
+      /* 液態無障礙字體：自動適應寬窄螢幕，字體大且清晰，防止留白與溢出 */
       --fluid-title: clamp(1.4rem, 4.5vw, 2.3rem);
       --fluid-subtitle: clamp(1.15rem, 3.2vw, 1.6rem);
       --fluid-body: clamp(1.15rem, 2.5vw, 1.45rem);
@@ -48,7 +48,7 @@
       font-size: var(--fluid-body);
     }
 
-    /* 強制允許所有輸入欄位與選擇器可點擊、選取、聚焦與修改，絕不鎖死 */
+    /* 確保所有輸入、下拉選單、按鈕、文字等在所有瀏覽器上都能無阻礙地被點擊、聚焦和操作 */
     input, select, textarea, button {
       user-select: text !important;
       -webkit-user-select: text !important;
@@ -67,7 +67,7 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 
-  <!-- 引入全域相容性最高的 Firebase 10.8 UMD 套件 (徹底防止 import Module 語法造成網頁死鎖) -->
+  <!-- 引入相容性最高的 Firebase 10.8 UMD 全域套件 (防止 Module 載入崩潰) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -93,7 +93,7 @@
           </div>
         </div>
         
-        <!-- 當前藥盒使用者角色 -->
+        <!-- 當前使用者資訊與代碼 -->
         <div class="bg-brand-700/80 px-4 py-2 rounded-2xl border border-white/10 flex flex-col items-end">
           <div class="flex items-center gap-1.5">
             <span class="fluid-subtitle text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
@@ -103,19 +103,19 @@
         </div>
       </div>
 
-      <!-- 頂部大按鈕切換列 -->
-      <nav class="bg-brand-700 p-1.5 rounded-2xl flex w-full lg:w-auto shadow-inner border border-brand-600" id="navTabsContainer">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
+      <!-- 頂部大按鈕切換列 (常駐在頂部) -->
+      <nav class="bg-brand-700 p-1.5 rounded-2xl flex flex-wrap gap-1 w-full lg:w-auto shadow-inner border border-brand-600" id="navTabsContainer">
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
           📅 一日
         </button>
-        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           🗓️ 一週
         </button>
-        <!-- 管理員核心控制鍵 (在管理者網頁時預設永遠顯現) -->
-        <button type="button" id="btnAdminView" onclick="window.switchView('admin')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <!-- 管理者專用控制鍵 (預設即展示在頂部，點選時解鎖) -->
+        <button type="button" id="btnAdminView" onclick="window.switchView('admin')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           👑 親友管理
         </button>
-        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="hidden flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
           ⚙️ 藥盒編輯規劃
         </button>
       </nav>
@@ -151,7 +151,7 @@
           <div>
             <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm font-bold">即時監控中</span>
             <div class="text-4xl sm:text-5xl font-black mt-2 tracking-tight" id="liveClock">00:00:00</div>
-            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate font-bold">2026年5月25日 星期一</div>
+            <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate">2026年5月25日 星期一</div>
           </div>
           <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-3 md:pt-0">
             <span class="fluid-meta text-slate-300 block font-bold">⏱️ 距離下一個時段還要：</span>
@@ -243,13 +243,13 @@
 
     <!-- 視圖2: 一週打卡進度卡片 -->
     <div id="weekView" class="hidden space-y-4 w-full">
-      <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-4 w-full">
+      <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-4 w-full font-bold">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h2 class="fluid-title text-slate-800 font-bold">🗓️ 一週服藥進度打卡卡片</h2>
+            <h2 class="fluid-title text-slate-800">🗓️ 一週服藥進度打卡卡片</h2>
             <p class="text-xs text-slate-500 mt-1">點擊下方時段圓點可補登或更正用藥狀態</p>
           </div>
-          <button type="button" id="resetWeeklyLogBtn" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all font-bold">
+          <button id="resetWeeklyLogBtn" type="button" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all">
             ⚠️ 歸零本週紀錄
           </button>
         </div>
@@ -262,7 +262,7 @@
     <!-- 視圖4: 親友管理中心 -->
     <div id="adminView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-6 w-full">
       <div class="border-b border-slate-100 pb-4">
-        <h2 class="fluid-title text-slate-800 flex items-center gap-2 font-black">👑 親友管理中心</h2>
+        <h2 class="fluid-title text-slate-800 flex items-center gap-2 font-black font-bold">👑 親友管理中心</h2>
         <p class="text-xs text-slate-500 mt-1">您可以在此新增親友藥包，並「指定管理者」代入預設藥盒，亦可複製專屬連結給親友使用。</p>
       </div>
 
@@ -303,7 +303,7 @@
 
     <!-- 視圖3: 系統配置與換藥修改 -->
     <div id="editView" class="hidden bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-6 w-full">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3 font-bold">
         <div>
           <h2 class="fluid-title text-slate-800 font-bold" id="editBoxTitle">⚙️ 正在編輯：--的藥盒</h2>
           <p class="text-xs text-slate-500 mt-1">您可以自由新增、編輯、刪除時段或任何用藥品項。</p>
@@ -350,11 +350,11 @@
       <!-- 檔案匯出匯入 -->
       <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
         <span class="text-xs text-slate-500 font-bold">備份/範本檔案管理:</span>
-        <div class="flex gap-2">
+        <div class="flex gap-2 font-bold">
           <button type="button" onclick="window.exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all font-bold">
             📥 匯出當前配置
           </button>
-          <label for="importFile" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all font-bold">
+          <label for="importFile" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all font-bold font-bold">
             📤 匯入範本檔案
           </label>
           <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
@@ -364,22 +364,22 @@
       <!-- 服藥時段與藥品編輯主體 -->
       <div class="space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="fluid-subtitle text-slate-800 font-black">服藥時段與藥物設定</h3>
-          <button type="button" onclick="window.addNewSlot()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all font-bold">
+          <h3 class="fluid-subtitle text-slate-800 font-black font-black">服藥時段與藥物設定</h3>
+          <button type="button" onclick="window.addNewSlot()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all font-bold font-bold">
             ➕ 新增用藥時段
           </button>
         </div>
-        <div id="editorSlotsContainer" class="space-y-4 w-full font-bold">
+        <div id="editorSlotsContainer" class="space-y-4 w-full">
           <!-- 編輯模組動態生成 -->
         </div>
       </div>
 
       <!-- 儲存與返回按鍵 -->
       <div class="pt-5 border-t border-slate-100 flex gap-3">
-        <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 text-base border border-slate-200 transition-all">
+        <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 text-base border border-slate-200 transition-all font-bold">
           ⬅️ 取消並返回藥盒主頁
         </button>
-        <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-md transition-all font-bold">
+        <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-md transition-all font-bold font-bold">
           💾 儲存修改並套用
         </button>
       </div>
@@ -394,8 +394,8 @@
         <div class="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-2 text-brand-600 text-2xl">
           🔒
         </div>
-        <h3 class="fluid-subtitle text-slate-800" id="passwordModalTitle">管理員安全驗證</h3>
-        <p class="text-xs text-slate-500 mt-1">請輸入 6~8 位管理密碼 (預設: 123456)</p>
+        <h3 class="fluid-subtitle text-slate-800 font-bold" id="passwordModalTitle">管理員安全驗證</h3>
+        <p class="text-xs text-slate-500 mt-1 font-bold">請輸入 6~8 位管理密碼 (預設: 123456)</p>
       </div>
       <div class="flex justify-center items-center gap-3 py-2">
         <div class="flex gap-2 justify-center" id="passwordDots">
@@ -408,20 +408,20 @@
         </div>
       </div>
       <div class="grid grid-cols-3 gap-3">
-        <button type="button" onclick="window.pressPassKey('1')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">1</button>
-        <button type="button" onclick="window.pressPassKey('2')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">2</button>
-        <button type="button" onclick="window.pressPassKey('3')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">3</button>
-        <button type="button" onclick="window.pressPassKey('4')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">4</button>
-        <button type="button" onclick="window.pressPassKey('5')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">5</button>
-        <button type="button" onclick="window.pressPassKey('6')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">6</button>
-        <button type="button" onclick="window.pressPassKey('7')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">7</button>
-        <button type="button" onclick="window.pressPassKey('8')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">8</button>
-        <button type="button" onclick="window.pressPassKey('9')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">9</button>
-        <button type="button" onclick="window.pressPassKey('C')" class="h-14 bg-rose-50 text-rose-600 font-bold text-lg rounded-2xl active:bg-rose-100">清除</button>
-        <button type="button" onclick="window.pressPassKey('0')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300">0</button>
-        <button type="button" onclick="window.submitPassCode()" class="h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-2xl shadow-md active:bg-emerald-700 font-bold font-bold">確定</button>
+        <button type="button" onclick="window.pressPassKey('1')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">1</button>
+        <button type="button" onclick="window.pressPassKey('2')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">2</button>
+        <button type="button" onclick="window.pressPassKey('3')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">3</button>
+        <button type="button" onclick="window.pressPassKey('4')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">4</button>
+        <button type="button" onclick="window.pressPassKey('5')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">5</button>
+        <button type="button" onclick="window.pressPassKey('6')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">6</button>
+        <button type="button" onclick="window.pressPassKey('7')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">7</button>
+        <button type="button" onclick="window.pressPassKey('8')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">8</button>
+        <button type="button" onclick="window.pressPassKey('9')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">9</button>
+        <button type="button" onclick="window.pressPassKey('C')" class="h-14 bg-rose-50 text-rose-600 font-bold text-lg rounded-2xl active:bg-rose-100 font-bold">清除</button>
+        <button type="button" onclick="window.pressPassKey('0')" class="h-14 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xl rounded-2xl active:bg-slate-300 font-bold">0</button>
+        <button type="button" onclick="window.submitPassCode()" class="h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg rounded-2xl shadow-md active:bg-emerald-700 font-bold font-bold font-bold font-bold">確定</button>
       </div>
-      <button type="button" onclick="window.closePasswordModal()" class="w-full h-11 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm transition-all mt-2">
+      <button type="button" onclick="window.closePasswordModal()" class="w-full h-11 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm transition-all mt-2 font-bold">
         返回主畫面
       </button>
     </div>
@@ -429,12 +429,12 @@
 
   <!-- ⚙️ 頁尾管理端快速入口 (親友獨立模式時自動隱藏) -->
   <div id="adminFooterEntry" class="w-full flex justify-center py-4 bg-slate-200 border-t border-slate-300">
-    <button type="button" onclick="window.switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all">
+    <button type="button" onclick="window.switchView('admin')" class="bg-brand-700 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-all font-bold">
       ⚙️ 進入管理員模式
     </button>
   </div>
 
-  <footer class="bg-slate-300 py-6 text-center text-xs text-slate-600 w-full mt-auto">
+  <footer class="bg-slate-300 py-6 text-center text-xs text-slate-600 w-full mt-auto font-bold">
     <p>© 2026 頤寧安全用藥監控系統. 專為高齡友善及高效率藥物安排設計.</p>
     <p class="mt-1 text-[11px] text-slate-500 font-bold">本軟體數據加密保存在本機與雲端 Firestore 資料庫.</p>
   </footer>
@@ -838,7 +838,7 @@
 
     // ================= 管理員主控台操作邏輯 =================
 
-    // 快速新增親友藥盒
+    // 快速新增親友藥盒 (同時初始化其對應之 offline 資料夾，保證新增立即生效可編輯)
     function createNewRelativeBox() {
       const nameInput = document.getElementById('newRelativeName');
       const boxIdInput = document.getElementById('newRelativeBoxId');
@@ -1165,9 +1165,9 @@
         const isToday = loopDate.toDateString() === today.toDateString();
 
         html += `
-          <div class="bg-slate-50 rounded-2xl py-3 px-1 border-2 ${isToday ? 'border-brand-500 bg-brand-50/20' : 'border-slate-200'} flex flex-col items-center">
+          <div class="bg-slate-50 rounded-2xl py-3 px-1 border-2 ${isToday ? 'border-brand-500 bg-brand-50/20' : 'border-slate-200'} flex flex-col items-center font-bold">
             <div class="text-center border-b border-slate-200 pb-1.5 w-full">
-              <span class="text-xs font-black text-slate-400 block font-bold font-bold">週${daysOfWeek[i]}</span>
+              <span class="text-xs font-black text-slate-400 block font-bold">週${daysOfWeek[i]}</span>
               <span class="fluid-meta font-black ${isToday ? 'text-brand-600' : 'text-slate-700'}">${loopDate.getDate()}</span>
             </div>
 
@@ -1177,9 +1177,9 @@
                 return `
                   <div onclick="window.toggleWeeklyDose('${dateStr}', '${slot.id}')" class="flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95">
                     <span class="text-[10px] text-slate-500 font-bold mb-1">${slot.name.substring(0, 2)}</span>
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isTaken ? 'bg-emerald-500 text-white border-emerald-500 shadow' : 'bg-white text-slate-300 border-slate-300'}">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isTaken ? 'bg-emerald-500 text-white border-emerald-500 shadow font-bold' : 'bg-white text-slate-300 border-slate-300 font-bold'}">
                       ${isTaken 
-                        ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ? `<svg class="w-5 h-5 font-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                            </svg>`
                         : `<span class="text-sm font-black">+</span>`
@@ -1385,8 +1385,8 @@
       if (editView) editView.classList.add('hidden');
       if (adminView) adminView.classList.add('hidden');
 
-      const normalClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
-      const activeClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
+      const normalClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold font-bold";
+      const activeClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold font-bold";
       
       if (btnDay) btnDay.className = normalClass;
       if (btnWeek) btnWeek.className = normalClass;
@@ -1426,30 +1426,30 @@
 
         html += `
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3">
-            <button type="button" onclick="window.removeEditorSlot(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg font-bold">
+            <button type="button" onclick="window.removeEditorSlot(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg font-bold font-bold">
               ✕ 刪除時段
             </button>
 
-            <div class="space-y-2.5 pt-4">
+            <div class="space-y-2.5 pt-4 font-bold">
               <div>
                 <label class="block text-xs font-black text-slate-400 mb-0.5">時段名稱 (例: 早餐後)</label>
-                <input type="text" value="${slot.name}" onchange="window.updateEditorSlotField(${sIdx}, 'name', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <input type="text" value="${slot.name}" oninput="window.updateSlotFieldDirect(${sIdx}, 'name', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時間 (例: 08:30)</label>
-                  <input type="text" value="${slot.time}" onchange="window.updateEditorSlotField(${sIdx}, 'time', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <input type="text" value="${slot.time}" oninput="window.updateSlotFieldDirect(${sIdx}, 'time', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時段備註</label>
-                  <input type="text" value="${slot.description || ''}" onchange="window.updateEditorSlotField(${sIdx}, 'description', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <input type="text" value="${slot.description || ''}" oninput="window.updateSlotFieldDirect(${sIdx}, 'description', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
               </div>
             </div>
 
             <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
               <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
+                <h4 class="text-xs font-black text-slate-600 font-bold font-bold">本時段用藥細項</h4>
                 <button type="button" onclick="window.addEditorItem(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
                   ＋ 新增藥品/食品
                 </button>
@@ -1461,31 +1461,31 @@
                     <button type="button" onclick="window.removeEditorItem(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500">
                       ✕
                     </button>
-                    <div>
+                    <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">藥名/品項名稱</label>
-                      <input type="text" value="${item.name}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'name', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.name}" oninput="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'name', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                      <div>
+                      <div class="font-bold">
                         <label class="block text-[10px] font-bold text-slate-400">類型</label>
-                        <select onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'type', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'type', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                           <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
                           <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
                           <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
                         </select>
                       </div>
-                      <div>
+                      <div class="font-bold">
                         <label class="block text-[10px] font-bold text-slate-400">劑量</label>
-                        <input type="text" value="${item.dosage || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'dosage', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" value="${item.dosage || ''}" oninput="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'dosage', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                       </div>
                     </div>
-                    <div>
+                    <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">主要效用</label>
-                      <input type="text" value="${item.effect || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'effect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.effect || ''}" oninput="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'effect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
-                    <div>
+                    <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">注意事項/副作用</label>
-                      <input type="text" value="${item.sideEffect || ''}" onchange="window.updateEditorItemField(${sIdx}, ${iIdx}, 'sideEffect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <input type="text" value="${item.sideEffect || ''}" oninput="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'sideEffect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                   </div>
                 `).join('')}
@@ -1500,7 +1500,7 @@
     }
 
     // 💡 補齊編輯 CRUD 各項函數，徹底杜絕 method-not-defined 死鎖 Bug
-    window.updateEditorSlotField = function(sIdx, field, val) {
+    window.updateSlotFieldDirect = function(sIdx, field, val) {
       if (editorSchedule[sIdx]) {
         editorSchedule[sIdx][field] = val;
       }
@@ -1544,7 +1544,7 @@
       }
     };
 
-    window.updateEditorItemField = function(sIdx, iIdx, field, val) {
+    window.updateItemFieldDirect = function(sIdx, iIdx, field, val) {
       if (editorSchedule[sIdx] && editorSchedule[sIdx].items && editorSchedule[sIdx].items[iIdx]) {
         editorSchedule[sIdx].items[iIdx][field] = val;
       }
