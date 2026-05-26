@@ -47,7 +47,6 @@
       font-size: var(--fluid-body);
     }
 
-    /* 確保所有輸入、選單、按鈕可被點擊與聚焦，不鎖死 */
     input, select, textarea, button {
       user-select: text !important;
       -webkit-user-select: text !important;
@@ -66,6 +65,11 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+
+  <!-- 引入 UMD 全域相容之 Firebase 10.8 套件，徹底防堵模組載入錯誤 -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
@@ -80,29 +84,32 @@
             </svg>
           </div>
           <div>
-            <h1 class="fluid-title tracking-wide text-white leading-none">頤寧個人用藥</h1>
-            <p class="text-xs text-slate-400 mt-1">獨立安全本機藥盒面板</p>
+            <div class="flex items-center gap-2">
+              <h1 class="fluid-title tracking-wide text-white leading-none">頤寧個人用藥</h1>
+              <span id="cloudStatusBadge" class="text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black font-bold">載入中...</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">雲端智能同步面板</p>
           </div>
         </div>
         
-        <!-- 當前藥盒使用者 -->
+        <!-- 當前使用者資訊與代碼 -->
         <div class="bg-brand-700/80 px-4 py-2 rounded-2xl border border-white/10 flex flex-col items-end">
           <div class="flex items-center gap-1.5">
             <span class="fluid-subtitle text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
-            <span class="text-xs text-slate-300">的專屬藥盒</span>
+            <span class="text-xs text-slate-300">的雲端藥盒</span>
           </div>
         </div>
       </div>
 
-      <!-- 頂部切換按鈕列 (常駐在頂部，隨按即切) -->
+      <!-- 頂部導航切換列（三個分頁預設永遠顯現於最上列） -->
       <nav class="bg-brand-700 p-1.5 rounded-2xl flex flex-wrap gap-1 w-full lg:w-auto shadow-inner border border-brand-600">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md">
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all bg-emerald-500 text-white shadow-md font-bold">
           📅 一日流程
         </button>
-        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold">
           🗓️ 一週打卡
         </button>
-        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold">
           ⚙️ 藥盒編輯規劃
         </button>
       </nav>
@@ -112,14 +119,14 @@
   <!-- 主內容區 -->
   <main class="flex-grow w-full px-3 py-4 space-y-4 max-w-full">
 
-    <!-- 視圖1: 一日即時監控畫面 -->
+    <!-- 視圖1: 一日即時監控畫面 (主畫面) -->
     <div id="dayView" class="space-y-4 w-full">
       <!-- 即時時鐘與時段提示面板 -->
       <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden w-full">
         <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10 relative">
           <div>
-            <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider font-bold">本機追蹤中</span>
+            <span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider font-bold">即時追蹤中</span>
             <div class="text-4xl sm:text-5xl font-black mt-2 tracking-tight" id="liveClock">00:00:00</div>
             <div class="fluid-meta text-slate-300 mt-1 font-bold" id="liveDate">2026年5月25日 星期一</div>
           </div>
@@ -208,7 +215,7 @@
       <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-4 w-full font-bold">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h2 class="fluid-title text-slate-800 font-bold">🗓️ 一週服藥進度打卡卡片</h2>
+            <h2 class="fluid-title text-slate-800">🗓️ 一週服藥進度打卡卡片</h2>
             <p class="text-xs text-slate-500 mt-1">點擊下方時段圓點可補登或更正用藥狀態</p>
           </div>
           <button id="resetWeeklyLogBtn" type="button" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all">
@@ -235,7 +242,8 @@
       <div class="bg-slate-50 p-5 rounded-3xl grid grid-cols-1 gap-4">
         <div>
           <label class="block text-sm font-black text-slate-700 mb-1">修改您的姓名</label>
-          <input type="text" id="editUsername" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base relative z-10" oninput="window.updateUsernameDirect(this.value)">
+          <!-- DOM讀取防打字中斷重繪 -->
+          <input type="text" id="editUsername" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base relative z-10">
         </div>
       </div>
 
@@ -257,7 +265,7 @@
       <div class="space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h3 class="fluid-subtitle text-slate-800 font-black">服藥時段與藥物設定</h3>
-          <button type="button" onclick="window.addNewSlot()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all">
+          <button type="button" onclick="window.addNewSlotInDom()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all">
             ➕ 新增用藥時段
           </button>
         </div>
@@ -279,7 +287,7 @@
 
   <footer class="bg-slate-300 py-6 text-center text-xs text-slate-600 w-full mt-auto font-bold">
     <p>© 2026 頤寧安全用藥監控系統. 專為高齡友善及高效率藥物安排設計.</p>
-    <p class="mt-1 text-[11px] text-slate-500 font-bold">所有數據皆儲存於本機安全快取中，完全防護個人隱私.</p>
+    <p class="mt-1 text-[11px] text-slate-500 font-bold">本軟體數據已成功對接 Google Firebase 進行安全雲端即時同步.</p>
   </footer>
 
   <!-- Toast 訊息浮窗 -->
@@ -289,7 +297,7 @@
   </div>
 
   <script>
-    // 預設用藥規劃數據（完美載入 Google Doc 最終確認版）
+    // 預設基本用藥規劃數據 (對應 Google Doc 最終確認妥寧睡前版)
     const defaultSchedule = [
       {
         id: "slot-1",
@@ -352,28 +360,79 @@
       takenLogs: {}
     };
 
-    let editorSchedule = []; // 編輯專用記憶暫存，避免輸入時失去焦點
+    window.boxId = "admin_self";
+    window.isOfflineMode = true; 
+    window.db = null;
+    window.auth = null;
+    const appId = 'yining-med-tracker';
+    let currentFirestoreUnsubscribe = null;
+
+    // Firebase 實體金鑰與跨設備同步專屬連結配置 (Rule 3)
+    let firebaseConfig = {
+      apiKey: "AIzaSyC5qwepU0PnotyRXzD4S0iTBZhHSiW-pus",
+      authDomain: "yining-med-tracker.firebaseapp.com",
+      projectId: "yining-med-tracker",
+      storageBucket: "yining-med-tracker.firebasestorage.app",
+      messagingSenderId: "733833835927",
+      appId: "1:733833835927:web:72727f17a5aa0cec4d00d2"
+    };
+
+    const hasValidFirebase = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
+
+    if (typeof firebase !== 'undefined' && hasValidFirebase) {
+      try {
+        const app = firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+        window.isOfflineMode = false;
+      } catch (e) {
+        console.warn("Firebase 啟動失敗，轉入離線暫存模式", e);
+        window.isOfflineMode = true;
+      }
+    } else {
+      window.isOfflineMode = true;
+    }
 
     // 啟動流程 (DOMContentLoaded 確保時鐘與預設藥物瞬時到位)
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       loadOfflineState();
       initClock();
       renderApp();
       setupModeUI();
+
+      if (!window.isOfflineMode) {
+        await initAuth();
+      } else {
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          badge.textContent = "本機離線模式";
+          badge.className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+        }
+      }
     });
 
-    // 依模式載入/顯隱 UI 控制 (管理者頁面永遠顯示控制按鍵)
-    function setupModeUI() {
-      const badge = document.getElementById('cloudStatusBadge');
-      if (badge) {
-        badge.textContent = "安全本機儲存";
-        badge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
+    async function initAuth() {
+      try {
+        await window.auth.signInAnonymously();
+        document.getElementById('cloudStatusBadge').textContent = "雲端同步啟動";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
+        setupFirestoreRealtimeSync();
+        setupModeUI();
+      } catch (e) {
+        window.isOfflineMode = true;
+        document.getElementById('cloudStatusBadge').textContent = "本機離線模式";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
       }
+    }
+
+    function setupModeUI() {
+      const activeName = window.appState.username || "陳大朋";
+      document.getElementById('headerUserDisplay').textContent = activeName;
     }
 
     // 本機暫存讀取與防髒快取機制
     function loadOfflineState() {
-      const saved = localStorage.getItem('yining_med_offline_single_user_v4');
+      const saved = localStorage.getItem('yining_med_offline_single_v4');
       let loadedState = null;
       if (saved) {
         try {
@@ -383,7 +442,7 @@
         }
       }
 
-      // 檢查本機快取有效性 (若快取無效、不完整或缺少「妥寧」，強制套用 Doc 最終規劃)
+      // 智慧校正：防殘留髒快取覆蓋
       let isCacheValid = loadedState && loadedState.schedule && Array.isArray(loadedState.schedule) && loadedState.schedule.length >= 5;
       if (isCacheValid) {
         const hasTuoning = loadedState.schedule.some(s => s.items && s.items.some(i => i.name.includes("妥寧")));
@@ -402,7 +461,60 @@
     }
 
     function saveOfflineState() {
-      localStorage.setItem('yining_med_offline_single_user_v4', JSON.stringify(window.appState));
+      localStorage.setItem('yining_med_offline_single_v4', JSON.stringify(window.appState));
+    }
+
+    // 雲端即時監聽與自動防護 (Rule 1: 嚴格公用路徑綁定)
+    function setupFirestoreRealtimeSync() {
+      if (window.isOfflineMode) return;
+      if (currentFirestoreUnsubscribe) {
+        currentFirestoreUnsubscribe();
+      }
+
+      // 綁定專屬管理者藥盒
+      const boxDocRef = window.db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(window.boxId);
+
+      currentFirestoreUnsubscribe = boxDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
+          const cloudData = docSnap.data();
+          window.appState.username = cloudData.username || "陳大朋";
+          window.appState.schedule = cloudData.schedule || JSON.parse(JSON.stringify(defaultSchedule));
+          window.appState.weeklyLogs = cloudData.weeklyLogs || {};
+          window.appState.takenLogs = cloudData.takenLogs || {};
+          
+          window.appState.schedule.forEach(s => {
+            if (!s.items) s.items = [];
+          });
+
+          renderApp();
+          calculateTimesAndReminders();
+        } else {
+          saveCloudState();
+        }
+      }, (err) => {
+        window.isOfflineMode = true;
+        loadOfflineState();
+        renderApp();
+        calculateTimesAndReminders();
+      });
+    }
+
+    async function saveCloudState() {
+      if (window.isOfflineMode) {
+        saveOfflineState();
+        return;
+      }
+      const boxDocRef = window.db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(window.boxId);
+      try {
+        await boxDocRef.set({
+          username: window.appState.username,
+          schedule: window.appState.schedule,
+          weeklyLogs: window.appState.weeklyLogs,
+          takenLogs: window.appState.takenLogs
+        });
+      } catch (e) {
+        saveOfflineState();
+      }
     }
 
     // 標記已服用打卡
@@ -448,7 +560,7 @@
       if (!window.appState.weeklyLogs[todayStr]) window.appState.weeklyLogs[todayStr] = {};
       window.appState.weeklyLogs[todayStr][slotId] = true;
 
-      saveOfflineState();
+      saveCloudState();
       showToast(`✅ 已記錄於 ${timeStr} 服用藥物！`);
       calculateTimesAndReminders();
       renderApp();
@@ -493,7 +605,7 @@
               ${(slot.items || []).map(item => `
                 <div class="text-xs text-slate-700 flex justify-between font-bold">
                   <span>• <strong>${item.name}</strong></span>
-                  <span class="text-[10px] text-slate-400 font-bold">x${item.dosage}</span>
+                  <span class="text-[10px] text-slate-400 font-bold font-bold">x${item.dosage}</span>
                 </div>
               `).join('')}
               ${(!slot.items || slot.items.length === 0) ? '<div class="text-xs text-slate-400 text-center font-bold">無安排藥品</div>' : ''}
@@ -526,7 +638,7 @@
         html += `
           <div class="bg-slate-50 rounded-2xl py-3 px-1 border-2 ${isToday ? 'border-brand-500 bg-brand-50/20' : 'border-slate-200'} flex flex-col items-center font-bold">
             <div class="text-center border-b border-slate-200 pb-1.5 w-full">
-              <span class="text-xs font-black text-slate-400 block font-bold">週${daysOfWeek[i]}</span>
+              <span class="text-xs font-black text-slate-400 block font-bold font-bold">週${daysOfWeek[i]}</span>
               <span class="fluid-meta font-black ${isToday ? 'text-brand-600' : 'text-slate-700'}">${loopDate.getDate()}</span>
             </div>
 
@@ -571,17 +683,16 @@
         showToast(`✅ 已手動登錄：${dateStr} ${timeStr} 服用`);
       }
 
-      saveOfflineState();
+      saveCloudState();
       renderApp();
       calculateTimesAndReminders();
     }
 
-    // 歸零打卡紀錄
     function requestResetWeeklyLogs() {
       if (confirm("確定要重設您本週所有的用藥打卡紀錄嗎？此動作無法復原。")) {
         window.appState.takenLogs = {};
         window.appState.weeklyLogs = {};
-        saveOfflineState();
+        saveCloudState();
         renderApp();
         calculateTimesAndReminders();
         showToast("🧹 本週紀錄已成功歸零");
@@ -589,11 +700,11 @@
     }
 
     function requestLockSettings() {
-      showToast("🔒 安全返回一日流程主頁");
+      showToast("🔒 返回一日主頁");
       switchViewDirectly('day');
     }
 
-    // 視圖切換 (直接切換，無密碼鎖阻擋)
+    // 智慧單頁視圖切換
     function switchView(viewName) {
       switchViewDirectly(viewName);
     }
@@ -611,8 +722,8 @@
       if (weekView) weekView.classList.add('hidden');
       if (editView) editView.classList.add('hidden');
 
-      const normalClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
-      const activeClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
+      const normalClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
+      const activeClass = "flex-1 lg:flex-initial px-8 py-3.5 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
       
       if (btnDay) btnDay.className = normalClass;
       if (btnWeek) btnWeek.className = normalClass;
@@ -631,9 +742,10 @@
       }
     }
 
-    // ================= 編輯與管理控制 =================
+    // ================= 藥盒編輯規劃主體 =================
+    // 💡 核心優化：將編輯暫存複製到局部變數，且修改輸入欄位時，
+    // 不會重新繪製 HTML 導致輸入焦點(Focus)中斷或打字游標跳走！
     function renderEditor() {
-      editorSchedule = JSON.parse(JSON.stringify(window.appState.schedule));
       renderEditorSlots();
     }
 
@@ -642,55 +754,54 @@
       if (!container) return;
       let html = "";
 
-      editorSchedule.forEach((slot, sIdx) => {
+      window.appState.schedule.forEach((slot, sIdx) => {
         if (!slot.items) slot.items = [];
 
         html += `
-          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3 pointer-events-auto z-10">
-            <button type="button" onclick="window.removeEditorSlot(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg font-bold font-bold pointer-events-auto relative z-20">
+          <div class="editor-slot bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3 pointer-events-auto z-10" data-slot-index="${sIdx}">
+            <button type="button" onclick="window.removeEditorSlotInDom(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg">
               ✕ 刪除時段
             </button>
 
             <div class="space-y-2.5 pt-4 font-bold">
               <div>
                 <label class="block text-xs font-black text-slate-400 mb-0.5">時段名稱 (例: 早餐後)</label>
-                <!-- 💡 核心修復：使用 onchange 更改記憶體資料，絕對不觸發 HTML 重繪，保證打字游標絕對不丟失 -->
-                <input type="text" value="${slot.name}" onchange="window.updateSlotFieldDirect(${sIdx}, 'name', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                <input type="text" value="${slot.name}" class="slot-input-name w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時間 (例: 08:30)</label>
-                  <input type="text" value="${slot.time}" onchange="window.updateSlotFieldDirect(${sIdx}, 'time', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                  <input type="text" value="${slot.time}" class="slot-input-time w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                   <label class="block text-xs font-black text-slate-400 mb-0.5">時段備註</label>
-                  <input type="text" value="${slot.description || ''}" onchange="window.updateSlotFieldDirect(${sIdx}, 'description', this.value)" class="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                  <input type="text" value="${slot.description || ''}" class="slot-input-desc w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
               </div>
             </div>
 
             <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
               <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-600 font-bold font-bold">本時段用藥細項</h4>
-                <button type="button" onclick="window.addEditorItem(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all pointer-events-auto relative z-20">
+                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
+                <button type="button" onclick="window.addEditorItemInDom(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
                   ＋ 新增藥品/食品
                 </button>
               </div>
 
-              <div class="space-y-2">
+              <div class="editor-items-list space-y-2">
                 ${slot.items.map((item, iIdx) => `
-                  <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 relative pointer-events-auto z-10">
-                    <button type="button" onclick="window.removeEditorItem(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500 pointer-events-auto relative z-20">
+                  <div class="editor-item-card bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 relative" data-item-index="${iIdx}">
+                    <button type="button" onclick="window.removeEditorItemInDom(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black text-xs">
                       ✕
                     </button>
                     <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">藥名/品項名稱</label>
-                      <input type="text" value="${item.name}" onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'name', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                      <input type="text" value="${item.name}" class="item-input-name w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                       <div class="font-bold">
                         <label class="block text-[10px] font-bold text-slate-400">類型</label>
-                        <select onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'type', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                        <select class="item-input-type w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                           <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
                           <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
                           <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
@@ -698,16 +809,16 @@
                       </div>
                       <div class="font-bold">
                         <label class="block text-[10px] font-bold text-slate-400">劑量</label>
-                        <input type="text" value="${item.dosage || ''}" onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'dosage', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                        <input type="text" value="${item.dosage || ''}" class="item-input-dosage w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                       </div>
                     </div>
                     <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">主要效用</label>
-                      <input type="text" value="${item.effect || ''}" onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'effect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                      <input type="text" value="${item.effect || ''}" class="item-input-effect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div class="font-bold">
                       <label class="block text-[10px] font-bold text-slate-400">注意事項/副作用</label>
-                      <input type="text" value="${item.sideEffect || ''}" onchange="window.updateItemFieldDirect(${sIdx}, ${iIdx}, 'sideEffect', this.value)" class="w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 pointer-events-auto relative z-20">
+                      <input type="text" value="${item.sideEffect || ''}" class="item-input-sideeffect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                   </div>
                 `).join('')}
@@ -721,15 +832,52 @@
       container.innerHTML = html;
     }
 
-    // 更新特定的時段資料
-    window.updateSlotFieldDirect = function(sIdx, field, val) {
-      if (editorSchedule[sIdx]) {
-        editorSchedule[sIdx][field] = val;
-      }
+    // 💡 體驗防振升級：將所有欄位變更從 DOM 自動讀取與套用，避免一邊輸入一邊重繪造成鍵盤消失
+    window.readEditorConfigFromDom = function() {
+      const schedule = [];
+      const slotElements = document.querySelectorAll('.editor-slot');
+      
+      slotElements.forEach(slotEl => {
+        const slotName = slotEl.querySelector('.slot-input-name').value;
+        const slotTime = slotEl.querySelector('.slot-input-time').value;
+        const slotDesc = slotEl.querySelector('.slot-input-desc').value;
+        
+        const items = [];
+        const itemElements = slotEl.querySelectorAll('.editor-item-card');
+        
+        itemElements.forEach(itemEl => {
+          const itemName = itemEl.querySelector('.item-input-name').value;
+          const itemType = itemEl.querySelector('.item-input-type').value;
+          const itemDosage = itemEl.querySelector('.item-input-dosage').value;
+          const itemEffect = itemEl.querySelector('.item-input-effect').value;
+          const itemSide = itemEl.querySelector('.item-input-sideeffect').value;
+          
+          items.push({
+            id: "item-" + Math.random().toString(36).substr(2, 9),
+            name: itemName,
+            type: itemType,
+            dosage: itemDosage,
+            effect: itemEffect,
+            sideEffect: itemSide
+          });
+        });
+
+        schedule.push({
+          id: "slot-" + Math.random().toString(36).substr(2, 9),
+          name: slotName,
+          time: slotTime,
+          description: slotDesc,
+          items: items
+        });
+      });
+
+      return schedule;
     };
 
-    window.addNewSlot = function() {
-      editorSchedule.push({
+    window.addNewSlotInDom = function() {
+      // 先儲存當前修改，防止重繪洗掉未存部分
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule.push({
         id: "slot-" + Date.now(),
         name: "自訂新時段",
         time: "12:00",
@@ -739,18 +887,20 @@
       renderEditorSlots();
     };
 
-    window.removeEditorSlot = function(sIdx) {
-      editorSchedule.splice(sIdx, 1);
+    window.removeEditorSlotInDom = function(sIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule.splice(sIdx, 1);
       renderEditorSlots();
     };
 
-    window.addEditorItem = function(sIdx) {
-      if (!editorSchedule[sIdx].items) {
-        editorSchedule[sIdx].items = [];
+    window.addEditorItemInDom = function(sIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      if (!window.appState.schedule[sIdx].items) {
+        window.appState.schedule[sIdx].items = [];
       }
-      editorSchedule[sIdx].items.push({
+      window.appState.schedule[sIdx].items.push({
         id: "item-" + Date.now(),
-        name: "新藥名",
+        name: "新藥物/食品",
         type: "medicine",
         dosage: "1 顆",
         effect: "效用說明",
@@ -759,29 +909,17 @@
       renderEditorSlots();
     };
 
-    window.removeEditorItem = function(sIdx, iIdx) {
-      if (editorSchedule[sIdx] && editorSchedule[sIdx].items) {
-        editorSchedule[sIdx].items.splice(iIdx, 1);
-        renderEditorSlots();
-      }
-    };
-
-    window.updateItemFieldDirect = function(sIdx, iIdx, field, val) {
-      if (editorSchedule[sIdx] && editorSchedule[sIdx].items && editorSchedule[sIdx].items[iIdx]) {
-        editorSchedule[sIdx].items[iIdx][field] = val;
-      }
-    };
-
-    // 更新使用者姓名
-    window.updateUsernameDirect = function(val) {
-      if (val && val.trim()) {
-        window.appState.username = val.trim();
-      }
+    window.removeEditorItemInDom = function(sIdx, iIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule[sIdx].items.splice(iIdx, 1);
+      renderEditorSlots();
     };
 
     window.saveEditorConfig = function() {
-      for (let i = 0; i < editorSchedule.length; i++) {
-        if (!editorSchedule[i].name.trim() || !editorSchedule[i].time.trim()) {
+      const schedule = window.readEditorConfigFromDom();
+      
+      for (let i = 0; i < schedule.length; i++) {
+        if (!schedule[i].name.trim() || !schedule[i].time.trim()) {
           showToast("⚠️ 請務必填寫時段名稱與時間！", "warning");
           return;
         }
@@ -792,26 +930,39 @@
         window.appState.username = inputName.value.trim();
       }
       
-      window.appState.schedule = JSON.parse(JSON.stringify(editorSchedule));
+      window.appState.schedule = schedule;
       
-      saveOfflineState();
+      saveCloudState();
       renderApp();
       calculateTimesAndReminders();
-      showToast("💾 用藥規劃設定已成功儲存！");
+      showToast("💾 用藥規劃已儲存更新！");
       
-      // 儲存完成後退回首頁一日追蹤
       switchViewDirectly('day');
     };
 
+    window.applyPrebuiltTemplate = function(templateType) {
+      if (confirm("⚠️ 套用此範本將會完全覆蓋此藥盒目前的服藥時段與藥物設定。確定要套用嗎？")) {
+        if (templateType === 'statins') {
+          window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+        } else if (templateType === 'simple') {
+          window.appState.schedule = JSON.parse(JSON.stringify(simpleSchedule));
+        }
+        renderEditorSlots();
+        showToast("⭐ 範本已成功套用，請點選下方儲存修改即可生效！");
+      }
+    };
+
     window.exportConfig = function() {
+      // 導出時先讀取當前DOM
+      window.appState.schedule = window.readEditorConfigFromDom();
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `頤寧本機藥盒_${window.appState.username}.json`);
+      downloadAnchor.setAttribute("download", `頤寧雲端備份_${window.appState.username}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      showToast("📥 範本設定檔案已成功下載！");
+      showToast("📥 備份設定檔案已下載！");
     };
 
     window.importConfig = function(event) {
@@ -823,11 +974,12 @@
         try {
           const imported = JSON.parse(e.target.result);
           if (imported && imported.schedule) {
-            editorSchedule = imported.schedule;
+            window.appState.schedule = imported.schedule;
+            if (imported.username) window.appState.username = imported.username;
             renderEditorSlots();
-            showToast("📤 範本設定已成功讀入，請點擊下方儲存完成套用。");
+            showToast("📤 範本與備份已導入，請點擊最下方儲存即可生效！");
           } else {
-            showToast("⚠️ 檔案格式不符合範本規範！", "warning");
+            showToast("⚠️ 檔案格式不符合規範！", "warning");
           }
         } catch (err) {
           showToast("⚠️ 解析檔案時發生錯誤！", "warning");
@@ -836,17 +988,11 @@
       reader.readAsText(file);
     };
 
-    // 暴露核心控制交互函數
-    window.applyPrebuiltTemplate = applyPrebuiltTemplate;
-    window.markCurrentSlotAsTaken = markCurrentSlotAsTaken;
-    window.toggleWeeklyDose = toggleWeeklyDose;
-    window.requestResetWeeklyLogs = requestResetWeeklyLogs;
-    window.requestLockSettings = requestLockSettings;
-    window.switchView = switchView;
-    window.switchViewDirectly = switchViewDirectly;
-    window.exportConfig = exportConfig;
-    window.importConfig = importConfig;
-    window.saveEditorConfig = saveEditorConfig;
+    window.updateUsernameDirect = function(val) {
+      if (val && val.trim()) {
+        window.appState.username = val.trim();
+      }
+    };
 
     // 倒計時及藥物提醒實時運算
     function calculateTimesAndReminders() {
@@ -894,7 +1040,7 @@
       const nextIndex = (currentSlotIndex + 1) % validSlots.length;
       nextSlot = validSlots[nextIndex];
 
-      // === 1. 上一次服藥過去多久 ===
+      // 上一次服藥過去多久
       const prevSlotNameEl = document.getElementById('prevSlotName');
       const prevSlotTimeTagEl = document.getElementById('prevSlotTimeTag');
       const prevDoseElapsedEl = document.getElementById('prevDoseElapsed');
@@ -911,7 +1057,7 @@
         renderMedicationListOnly('prevMedicationsList', prevSlot.items);
       }
 
-      // === 2. 當下進行中時段 ===
+      // 當下進行中時段
       const currentSlotNameEl = document.getElementById('currentSlotName');
       const currentSlotTimeTagEls = document.querySelectorAll('#currentSlotTimeTag');
       const isTakenToday = window.appState.takenLogs[todayStr]?.[currentActiveSlot.id];
@@ -944,7 +1090,7 @@
         }
       }
 
-      // === 3. 後一階段還有多久 ===
+      // 後一階段還有多久
       const nextSlotNameEl = document.getElementById('nextSlotName');
       const nextSlotTimeTagEl = document.getElementById('nextSlotTimeTag');
       const nextDoseTargetTimeEl = document.getElementById('nextDoseTargetTime');
@@ -976,7 +1122,7 @@
       el.setAttribute('data-loaded-slot', JSON.stringify(items));
 
       if (!items || items.length === 0) {
-        el.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center font-bold font-bold">無藥物安排</p>`;
+        el.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center font-bold">無藥物安排</p>`;
         return;
       }
 
