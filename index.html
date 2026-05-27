@@ -29,12 +29,11 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
-      /* 預設字體大小：老花眼友善的大尺寸基準 */
+      /* 老花眼友善的大尺寸基準字體 */
       --fluid-title: clamp(1.4rem, 4.5vw, 2.2rem);
       --fluid-subtitle: clamp(1.2rem, 3.5vw, 1.7rem);
       --fluid-body: clamp(1.15rem, 2.6vw, 1.45rem);
       --fluid-meta: clamp(1.05rem, 2.2vw, 1.25rem);
-      /* 內容區縮放倍率 */
       --content-scale: 1.0;
     }
 
@@ -42,9 +41,10 @@
       font-family: 'Noto Sans TC', sans-serif;
       background-color: #f0f4f8;
       font-size: var(--fluid-body);
+      overflow-x: hidden;
     }
 
-    /* 縮放容器：只針對內容區進行動態放大 */
+    /* 只縮放內容區，頂部導航維持固定大小 */
     #zoomableArea {
       transform: scale(var(--content-scale));
       transform-origin: top center;
@@ -68,7 +68,6 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* 確保縮放後高度能正確撐開容器 */
     .zoom-wrapper { overflow: visible; width: 100%; }
   </style>
 
@@ -78,7 +77,6 @@
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
-  <!-- 頂部高精簡導航欄 (固定大小，不隨縮放按鈕變動) -->
   <header class="bg-brand-800 text-white shadow-md sticky top-0 z-50 w-full py-1 sm:py-1.5 shrink-0">
     <div class="w-full px-3 sm:px-4 flex flex-row justify-between items-center gap-2">
       <div class="flex items-center gap-1.5">
@@ -104,7 +102,6 @@
     </div>
   </header>
 
-  <!-- 內容區縮放包覆層 -->
   <div class="zoom-wrapper flex-grow overflow-x-hidden overflow-y-auto">
     <main id="zoomableArea" class="w-full px-3 py-4 space-y-5 max-w-full">
 
@@ -124,7 +121,6 @@
           </div>
         </div>
 
-        <!-- 核心監控三部曲 (時段名稱已修正) -->
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full">
           <!-- 前一階段 -->
           <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
@@ -141,7 +137,7 @@
             </div>
           </div>
 
-          <!-- 目前應服 (時段名稱已補註) -->
+          <!-- 目前應服 (時段名稱已註明) -->
           <div class="bg-white rounded-3xl p-6 border-4 border-emerald-500 shadow-xl flex flex-col justify-between transform lg:scale-105 z-10 relative">
             <div class="absolute top-0 right-6 transform -translate-y-1/2">
               <span class="bg-emerald-500 text-white text-base font-black px-6 py-2 rounded-full shadow-lg">當下進行中</span>
@@ -154,7 +150,7 @@
                 </h3>
                 <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 border-2 border-rose-200 px-4 py-2 rounded-full" id="currentSlotTimeTag">--:--</span>
               </div>
-              <div class="text-slate-950 mb-4 bg-brand-50 p-4 rounded-2xl border-2 border-brand-100 font-black">
+              <div class="text-slate-950 mb-4 bg-brand-50 p-4 rounded-2xl border-2 border-brand-100 font-black text-center">
                 <span class="fluid-subtitle text-brand-800">當下時段：<span id="currentSlotName">--</span></span>
               </div>
               <div id="currentMedicationsList" class="space-y-5"></div>
@@ -169,7 +165,7 @@
             </div>
           </div>
 
-          <!-- 後一階段 (時段名稱已修正) -->
+          <!-- 後一階段 -->
           <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
             <div>
               <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-3">
@@ -191,7 +187,6 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="dailyOverviewContainer"></div>
         </div>
 
-        <!-- ⚠️ 重要用藥與飲食安全提醒 (老花眼友善特大字體，資料完整) -->
         <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-7 shadow-lg space-y-6 w-full">
           <h3 class="fluid-title text-amber-950 flex items-center gap-3 font-black">
             <span>⚠️ 重要用藥與飲食安全提醒</span>
@@ -249,7 +244,6 @@
           <input type="text" id="editUsername" class="w-full h-16 bg-white border-2 border-slate-200 rounded-2xl px-6 font-black focus:outline-none focus:ring-4 focus:ring-emerald-500 text-2xl relative z-10">
         </div>
 
-        <!-- 檔案備份匯出匯入區塊 -->
         <div class="bg-brand-50 p-6 rounded-3xl space-y-4">
           <span class="fluid-body font-black text-brand-800 block">📦 備份設定檔案管理:</span>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -269,7 +263,6 @@
     </main>
   </div>
 
-  <!-- 浮動內容縮放控制項 (獨立按鈕) -->
   <div class="fixed bottom-8 right-6 flex flex-col gap-3 z-50">
     <button type="button" onclick="window.adjustZoom(0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">＋</button>
     <button type="button" onclick="window.adjustZoom(-0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">－</button>
@@ -288,7 +281,7 @@
     const defaultSchedule = [
       {
         id: "slot-3vbx7brcf", name: "早餐後", time: "08:30",
-        description: "隨餐或飯後30分鐘內。此時段集中處理白天所需的營養素，避免干擾日間工作。",
+        description: "隨餐或飯後30分鐘內。此時段集中處理白天所需的營養素，工作前服用即可完成，避免干擾日間工作。",
         items: [
           { id: "item-b", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，若含有脂溶性營養素或合併配方，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
           { id: "item-l", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。極度依賴食物中的油脂來帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
@@ -297,9 +290,9 @@
       },
       {
         id: "slot-vyiblho7v", name: "午餐後", time: "12:30",
-        description: "隨餐或飯後30分鐘內。非類固醇消炎止痛藥對胃黏膜刺激性較大，絕對必須飯後服用。",
+        description: "隨餐或飯後30分鐘內。非類固醇消炎止痛藥 (NSAIDs) 對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。",
         items: [
-          { id: "item-p1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。", sideEffect: "絕對必須飯後服用，不可空腹，以免傷胃。" },
+          { id: "item-p1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。絕對必須飯後服用，不可空腹，以免傷胃。", sideEffect: "絕對必須飯後服用，不可空腹，以免傷胃。" },
           { id: "item-m1", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，有效緩解白天因走動引發的足跟疼痛。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，若開車或操作機械請特別留意安全。" }
         ]
       },
@@ -313,7 +306,7 @@
       },
       {
         id: "slot-kj98ovr7n", name: "夜間睡前", time: "22:00",
-        description: "就寢前30分鐘。妥寧不受空腹限制。鈣片利用靜止吸收、助眠並與魚油區隔。",
+        description: "就寢前30分鐘。妥寧不受空腹限制。鈣片利用身體靜止吸收、助眠並與魚油區隔。",
         items: [
           { id: "item-t1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。固定於睡前服用可精準抑制深夜肝臟合成膽固醇的高峰期。", sideEffect: "不受空腹或飯後限制，睡前服可避開日間忙碌時段以防漏藥。" },
           { id: "item-c1", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油間隔12小時以上，完全避免產生皂化反應，確保兩者完美吸收。" }
@@ -366,7 +359,6 @@
           }
         } catch (e) {}
       }
-      window.resetZoom(); // 每次打開回復預設倍率
     }
 
     function saveOfflineState() {
@@ -399,7 +391,7 @@
           <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-sm space-y-4">
             <div class="flex justify-between items-center gap-2">
               <span class="text-2xl sm:text-3xl font-black text-slate-950">${item.name}</span>
-              <span class="text-sm font-black border-2 border-brand-200 px-3 py-1 rounded-xl bg-brand-50 text-brand-800">1 顆</span>
+              <span class="text-sm font-black border-2 border-brand-200 px-3 py-1 rounded-xl bg-brand-50 text-brand-800">${item.dosage}</span>
             </div>
             <div class="p-4 bg-brand-50/50 rounded-2xl text-slate-900 leading-relaxed font-bold">
               <strong class="text-brand-900 font-black">【效能】：</strong>${item.effect}
@@ -432,7 +424,6 @@
       const prv = valid[(curIdx - 1 + valid.length) % valid.length];
       const nxt = valid[(curIdx + 1) % valid.length];
 
-      // 修正名稱與時段顯示
       document.getElementById('prevSlotName').textContent = prv.name;
       document.getElementById('prevSlotTimeTag').textContent = prv.time;
       renderMedicationListDetailed('prevMedicationsList', prv.items);
@@ -476,7 +467,7 @@
             </div>
             <div class="fluid-meta text-slate-500 mb-3">${slot.description}</div>
             <div class="border-t border-dashed border-slate-200 pt-2 space-y-2">
-              ${slot.items.map(i => `<div class="fluid-body text-slate-800">• ${i.name}</div>`).join('')}
+              ${slot.items.map(i => `<div class="fluid-body text-slate-800 flex justify-between"><span>• ${i.name}</span><span class="text-slate-400 text-xs">${i.dosage}</span></div>`).join('')}
             </div>
           </div>
         `;
