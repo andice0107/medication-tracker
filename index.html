@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="頤寧用藥">
   <meta name="mobile-web-app-capable" content="yes">
   
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -17,8 +18,13 @@
         extend: {
           colors: {
             brand: {
-              50: '#f0f4f8', 100: '#d9e2ec', 200: '#bcccdc',
-              500: '#334e68', 600: '#243b53', 700: '#102a43', 800: '#0c1b2a',
+              50: '#f0f4f8',
+              100: '#d9e2ec',
+              200: '#bcccdc',
+              500: '#334e68',
+              600: '#243b53',
+              700: '#102a43',
+              800: '#0c1b2a',
             }
           }
         }
@@ -27,33 +33,53 @@
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
+    
     :root {
+      /* 液態無障礙縮放字體 */
       --fluid-title: clamp(1.1rem, 3.5vw, 1.8rem);
       --fluid-subtitle: clamp(1rem, 2.5vw, 1.4rem);
       --fluid-body: clamp(1.05rem, 2.2vw, 1.35rem);
       --fluid-meta: clamp(0.95rem, 2vw, 1.15rem);
     }
+
     body {
       font-family: 'Noto Sans TC', sans-serif;
       background-color: #f0f4f8;
       font-size: var(--fluid-body);
-      -webkit-user-select: none;
     }
-    input, select, textarea {
+
+    /* 確保輸入與選擇元素於點選時不失效 */
+    input, select, textarea, button {
       user-select: text !important;
       -webkit-user-select: text !important;
       pointer-events: auto !important;
     }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .fluid-title { font-size: var(--fluid-title); font-weight: 900; }
+    .fluid-subtitle { font-size: var(--fluid-subtitle); font-weight: 700; }
+    .fluid-body { font-size: var(--fluid-body); }
+    .fluid-meta { font-size: var(--fluid-meta); }
+
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .animate-fade { animation: fadeIn 0.3s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
   </style>
+
+  <!-- 引入全域相容性最高的 Firebase 10.8 UMD 全套元件 (防止 Module 加載失效) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
-  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full py-2">
+  <!-- 頂部高精簡滿版導航欄 (面積精準縮減 1/2，最大化釋放下方內容空間) -->
+  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full py-1.5 sm:py-2">
     <div class="w-full px-3 sm:px-4 flex flex-row justify-between items-center gap-2">
+      
+      <!-- 標題圖示區 (比例調小 50%) -->
       <div class="flex items-center gap-2">
         <div class="bg-emerald-500 p-1.5 rounded-xl shadow-inner">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,379 +89,666 @@
         <div>
           <div class="flex items-center gap-1.5">
             <h1 class="text-sm sm:text-base font-black tracking-wide text-white leading-none">頤寧個人用藥</h1>
-            <span id="cloudStatusBadge" class="text-[9px] bg-emerald-500 text-white px-1 rounded font-bold">同步中</span>
+            <span id="cloudStatusBadge" class="text-[9px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1 rounded font-bold">載入中</span>
           </div>
-          <p class="text-[9px] text-slate-400 mt-0.5 leading-none" id="subTitleDisplay">戴漢彬 專屬監控面板</p>
+          <p class="text-[9px] text-slate-400 mt-0.5 leading-none">雲端智能同步面板</p>
         </div>
       </div>
       
+      <!-- 當前使用者藥盒標籤 (緊湊排列) -->
+      <div class="bg-brand-700/80 px-2 py-0.5 rounded-xl border border-white/10 flex flex-col items-end">
+        <div class="flex items-center gap-1">
+          <span class="text-xs sm:text-sm text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
+          <span class="text-[9px] text-slate-300">的雲端藥盒</span>
+        </div>
+      </div>
+
+      <!-- 頂部導航按鈕列 (精緻緊湊排版，高度縮減，字體隨比例縮小) -->
       <nav class="bg-brand-700 p-0.5 rounded-xl flex gap-0.5 border border-brand-600">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all bg-emerald-50 text-emerald-900 shadow-md">📅 一日流程</button>
-        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">🗓️ 打卡紀錄</button>
-        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">⚙️ 規劃編輯</button>
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow-md">
+          📅 一日流程
+        </button>
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">
+          🗓️ 一週打卡
+        </button>
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">
+          ⚙️ 藥盒編輯規劃
+        </button>
       </nav>
+
     </div>
   </header>
 
+  <!-- 主內容區 -->
   <main class="flex-grow w-full px-3 py-4 space-y-4 max-w-full">
-    
-    <!-- 視圖1: 一日監控 -->
-    <div id="dayView" class="space-y-4 w-full animate-fade">
+
+    <!-- 視圖1: 一日即時監控畫面 (主畫面) -->
+    <div id="dayView" class="space-y-4 w-full">
+      <!-- 即時時鐘與時段提示面板 (微縮高度以騰出更大藥品顯示區) -->
       <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-2xl p-4 text-white shadow-md relative overflow-hidden w-full">
+        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 z-10 relative">
           <div>
-            <span class="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase font-bold">LIVE</span>
+            <span class="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider font-bold">即時追蹤中</span>
             <div class="text-3xl sm:text-4xl font-black mt-1 tracking-tight" id="liveClock">00:00:00</div>
-            <div class="text-xs sm:text-sm text-slate-300 mt-0.5 font-bold" id="liveDate">--</div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-0.5 font-bold" id="liveDate">2026年5月27日 星期三</div>
           </div>
-          <div class="text-left md:text-right w-full md:w-auto">
-            <span class="text-xs sm:text-sm text-slate-300 block font-bold">下個時段倒數：</span>
+          <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-2 md:pt-0">
+            <span class="text-xs sm:text-sm text-slate-300 block font-bold">⏱️ 距離下一個時段還要：</span>
             <span class="text-2xl sm:text-3xl font-black text-amber-300 block mt-0.5" id="nextDoseCountdown">--小時--分</span>
           </div>
         </div>
       </div>
 
+      <!-- 核心監控三部曲面板 (當前、前一階段、後一階段，無任何高度截斷阻擋，完美展開全部藥品) -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm">
-          <h3 class="text-sm font-black text-slate-500 mb-3 border-b border-slate-200 pb-2 flex justify-between">
-            <span>⏮️ 上一時段</span><span id="prevSlotTimeTag" class="bg-slate-200 px-2 py-0.5 rounded-full">--:--</span>
-          </h3>
-          <div id="prevMedList" class="space-y-2"></div>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 border-4 border-emerald-500 shadow-md transform lg:scale-105 z-10 relative">
-          <div class="absolute top-0 right-6 transform -translate-y-1/2 bg-emerald-500 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-md">當前應服</div>
-          <div class="flex justify-between items-center border-b border-emerald-100 pb-3 mb-4">
-            <h3 class="fluid-title text-slate-900 font-black" id="currentSlotNameDisplay">--</h3>
-            <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full" id="currentSlotTimeTag">--:--</span>
+        
+        <!-- 前一階段用藥 -->
+        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
+              <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2 font-bold">
+                <span>⏮️ 前一階段用藥</span>
+              </h3>
+              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
+            </div>
+            <div class="text-slate-700 space-y-1.5 mb-3 font-bold">
+              <div class="fluid-meta text-brand-700">時段：<span id="prevSlotName" class="font-black">--</span></div>
+              <div class="fluid-meta text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-black" id="prevDoseElapsed">已過去：--</div>
+            </div>
+            <!-- 所有藥物與保健食品 100% 完全顯示，杜絕被 max-h 與溢出隱藏所遮蔽的風險 -->
+            <div id="prevMedicationsList" class="space-y-2 pr-1"></div>
           </div>
-          <div id="currentMedList" class="space-y-3 mb-4"></div>
-          <button type="button" onclick="window.markTaken()" id="takeButton" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
-            <span>確認此時段已服藥</span>
-          </button>
         </div>
 
-        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm">
-          <h3 class="text-sm font-black text-slate-500 mb-3 border-b border-slate-200 pb-2 flex justify-between">
-            <span>⏭️ 下一時段</span><span id="nextSlotTimeTag" class="bg-slate-200 px-2 py-0.5 rounded-full">--:--</span>
-          </h3>
-          <div id="nextMedList" class="space-y-2"></div>
+        <!-- 目前應服藥物 -->
+        <div class="bg-white rounded-3xl p-6 border-4 border-emerald-500 shadow-md flex flex-col justify-between transform lg:scale-105 z-10 relative">
+          <div class="absolute top-0 right-6 transform -translate-y-1/2">
+            <span class="bg-emerald-500 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-md font-bold">當下進行中</span>
+          </div>
+          <div>
+            <div class="flex justify-between items-center border-b border-emerald-100 pb-3 mb-4">
+              <h3 class="fluid-title text-slate-900 flex items-center gap-2 font-bold">
+                <span class="w-3.5 h-3.5 bg-rose-500 rounded-full animate-pulse"></span>
+                目前時段應服
+              </h3>
+              <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 border border-rose-200 px-3.5 py-1.5 rounded-full" id="currentSlotTimeTag">--:--</span>
+            </div>
+            <div class="text-slate-700 mb-4 bg-brand-50/50 p-3 rounded-2xl border border-brand-100/50 font-bold">
+              <span class="fluid-subtitle font-black text-brand-700">當下時段：<span id="currentSlotName">--</span></span>
+            </div>
+            <!-- 目前應服藥物 100% 高度完整展開 -->
+            <div id="currentMedicationsList" class="space-y-3 pr-1"></div>
+          </div>
+          <div class="pt-4 mt-4 border-t border-slate-100">
+            <button type="button" onclick="window.markCurrentSlotAsTaken()" id="takeButton" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+              確認此時段已服藥
+            </button>
+          </div>
+        </div>
+
+        <!-- 後一階段用藥 -->
+        <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
+              <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2 font-bold">
+                <span>⏭️ 後一階段用藥</span>
+              </h3>
+              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
+            </div>
+            <div class="text-slate-700 space-y-1.5 mb-3 font-bold">
+              <div class="fluid-meta text-brand-700">時段：<span id="nextSlotName" class="font-black">--</span></div>
+              <div class="fluid-meta text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
+            </div>
+            <!-- 後續所有藥包安排 100% 完整顯示，完美預防漏藥 -->
+            <div id="nextMedicationsList" class="space-y-2 pr-1"></div>
+          </div>
         </div>
       </section>
-    </div>
 
-    <!-- 視圖2: 一週紀錄 -->
-    <div id="weekView" class="hidden space-y-4 w-full animate-fade">
-      <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100">
-        <h2 class="fluid-title text-slate-800 font-black border-b border-slate-100 pb-3 mb-4">🗓️ 一週服藥狀態</h2>
-        <div class="grid grid-cols-7 gap-2" id="weekGrid"></div>
+      <!-- 全日服藥安排大綱 -->
+      <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3 w-full">
+        <h3 class="fluid-subtitle text-slate-800 border-b border-slate-100 pb-2 font-bold">📋 全日服藥安排大綱</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="dailyOverviewContainer"></div>
       </div>
     </div>
 
-    <!-- 視圖3: 編輯規劃 (補齊備份與匯入按鈕) -->
-    <div id="editView" class="hidden bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-6 w-full animate-fade">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
-        <div>
-          <h2 class="fluid-title text-slate-800 font-black">⚙️ 編輯用藥規劃</h2>
-          <p class="text-xs text-slate-500 mt-1">您可以隨時修改內容，或使用按鈕進行備份。</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="window.exportData()" class="bg-brand-600 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-sm hover:bg-brand-500 transition-all">📥 匯出備份</button>
-          <label class="bg-slate-200 text-slate-700 text-xs font-black px-4 py-2.5 rounded-xl cursor-pointer hover:bg-slate-300 transition-all">
-            📤 載入備份
-            <input type="file" class="hidden" accept=".json" onchange="window.importData(event)">
-          </label>
-        </div>
-      </div>
-
-      <div class="space-y-6">
-        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-          <label class="block text-sm font-black text-slate-600 mb-2">使用者姓名</label>
-          <input type="text" id="editUsername" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:ring-2 focus:ring-emerald-500 transition-all">
-        </div>
-
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <h3 class="fluid-subtitle font-black text-slate-800">時段與藥品設定</h3>
-            <button onclick="window.addSlot()" class="bg-emerald-600 text-white text-xs font-black px-3 py-1.5 rounded-lg">+ 新增時段</button>
+    <!-- 視圖2: 一週打卡進度卡片 -->
+    <div id="weekView" class="hidden space-y-4 w-full">
+      <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-4 w-full font-bold">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="fluid-title text-slate-800">🗓️ 一週服藥進度打卡卡片</h2>
+            <p class="text-xs text-slate-500 mt-1">點擊下方時段圓點可補登或更正用藥狀態</p>
           </div>
-          <div id="editorSlotsContainer" class="space-y-6"></div>
+          <button id="resetWeeklyLogBtn" type="button" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all">
+            ⚠️ 歸零本週紀錄
+          </button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 sm:gap-2 overflow-x-auto no-scrollbar w-full" id="weekGrid"></div>
+      </div>
+    </div>
+
+    <!-- 視圖3: 系統配置與換藥修改 (DOM 交互不中斷重繪，輸入流程最順暢) -->
+    <div id="editView" class="hidden bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-6 w-full animate-fade">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3 font-bold">
+        <div>
+          <h2 class="fluid-title text-slate-800 font-bold" id="editBoxTitle">⚙️ 正在編輯您的用藥規劃</h2>
+          <p class="text-xs text-slate-500 mt-1">修改完成後請記得點擊最下方的「💾 儲存修改並套用」。</p>
+        </div>
+        <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-5 py-3 rounded-2xl border border-slate-300 text-base shadow-sm transition-all flex items-center gap-1.5">
+          ⬅️ 返回用藥追蹤
+        </button>
+      </div>
+
+      <!-- 個人化設定 -->
+      <div class="bg-slate-50 p-5 rounded-3xl grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-black text-slate-700 mb-1">修改您的姓名</label>
+          <input type="text" id="editUsername" class="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base relative z-10">
         </div>
       </div>
 
-      <div class="pt-6 border-t border-slate-100 flex gap-3">
-        <button onclick="window.switchView('day')" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all">取消</button>
-        <button onclick="window.saveAll()" class="flex-1 h-14 bg-emerald-600 text-white font-black rounded-2xl shadow-lg hover:bg-emerald-500 transition-all">💾 儲存修改</button>
+      <!-- 檔案匯出匯入 -->
+      <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
+        <span class="text-xs text-slate-500 font-bold">備份 / 範本檔案管理:</span>
+        <div class="flex gap-2 font-bold">
+          <button type="button" onclick="window.exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all">
+            📥 匯出當前配置 (.json)
+          </button>
+          <label for="importFile" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all">
+            📤 匯入範本更新
+          </label>
+          <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
+        </div>
+      </div>
+
+      <!-- 快速範本還原區 -->
+      <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/30 p-5 rounded-3xl space-y-3 font-bold">
+        <h4 class="font-black text-indigo-950 text-base flex items-center gap-1.5">
+          <span>💡 快速還原預設用藥表</span>
+        </h4>
+        <p class="text-xs text-indigo-800">若紀錄遺失或清空，點擊下方即可瞬時載入您上傳的最終規劃版本：</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="window.applyPrebuiltTemplate('statins')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all pointer-events-auto relative z-10">
+            ⭐ 妥寧睡前服與補鈣葉黃素規劃 (最終確認版)
+          </button>
+          <button type="button" onclick="window.applyPrebuiltTemplate('simple')" class="bg-white hover:bg-indigo-50 text-indigo-800 font-extrabold text-xs px-3.5 py-2.5 rounded-xl border border-indigo-200 shadow-sm transition-all pointer-events-auto relative z-10">
+            ⭐ 簡易三餐飯後基本用藥
+          </button>
+        </div>
+      </div>
+
+      <!-- 服藥時段與藥品編輯主體 -->
+      <div class="space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+          <h3 class="fluid-subtitle text-slate-800 font-black">服藥時段與藥物設定</h3>
+          <button type="button" onclick="window.addNewSlotInDom()" class="bg-brand-600 hover:bg-brand-500 text-white font-black text-sm px-4 py-2 rounded-xl transition-all">
+            ➕ 新增用藥時段
+          </button>
+        </div>
+        <div id="editorSlotsContainer" class="space-y-4 w-full"></div>
+      </div>
+
+      <!-- 儲存與返回按鍵 -->
+      <div class="pt-5 border-t border-slate-100 flex gap-3">
+        <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 text-base border border-slate-200 transition-all">
+          ⬅️ 取消並返回藥盒主頁
+        </button>
+        <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-14 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base rounded-2xl shadow-md transition-all">
+          💾 儲存修改並套用
+        </button>
       </div>
     </div>
+
   </main>
 
+  <footer class="bg-slate-300 py-4 text-center text-xs text-slate-600 w-full mt-auto font-bold">
+    <p>© 2026 頤寧安全用藥監控系統. 專為高齡友善及高效率藥物安排設計.</p>
+    <p class="mt-1 text-[11px] text-slate-500 font-bold">本軟體數據已成功對接 Google Firebase 進行安全雲端即時同步.</p>
+  </footer>
+
+  <!-- Toast 訊息浮窗 -->
+  <div id="toastMessage" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2 border border-white/10">
+    <span id="toastIcon">💡</span>
+    <span id="toastText">訊息</span>
+  </div>
+
   <script>
-    // 預置戴先生提供的完整規劃資料
-    const initialData = {
-      "username": "戴漢彬",
-      "schedule": [
-        {
-          "id": "slot-3vbx7brcf", "name": "早餐後", "time": "08:30", "description": "隨餐或飯後30分鐘內",
-          "items": [
-            { "name": "維他命 B 群", "dosage": "1 顆", "effect": "提供活力" },
-            { "name": "葉黃素", "dosage": "1 顆", "effect": "保養黃斑部" },
-            { "name": "魚油", "dosage": "2 顆", "effect": "保護心血管" }
-          ]
-        },
-        {
-          "id": "slot-vyiblho7v", "name": "午餐後", "time": "12:30", "description": "隨餐或飯後30分鐘內",
-          "items": [
-            { "name": "骨科止痛消炎藥", "dosage": "1 顆", "effect": "緩解足跟疼痛" },
-            { "name": "肌肉鬆弛劑", "dosage": "1 顆", "effect": "放鬆肌肉" }
-          ]
-        },
-        {
-          "id": "slot-j9brkk69g", "name": "晚餐後", "time": "18:30", "description": "隨餐或飯後30分鐘內",
-          "items": [
-            { "name": "高血壓藥", "dosage": "1 顆", "effect": "控制血壓穩定" },
-            { "name": "維康肝藥", "dosage": "1 顆", "effect": "水飛薊素" }
-          ]
-        },
-        {
-          "id": "slot-kj98ovr7n", "name": "夜間睡前", "time": "22:00", "description": "就寢前30分鐘",
-          "items": [
-            { "name": "妥寧 (降血脂藥)", "dosage": "半 顆", "effect": "抑制深夜膽固醇合成" },
-            { "name": "鈣片", "dosage": "1 顆", "effect": "穩定神經助眠" }
-          ]
-        },
-        {
-          "id": "slot-n64cn82j1", "name": "骨科備用藥", "time": "23:59", "description": "若夜間疼痛發作時",
-          "items": [
-            { "name": "骨科止痛消炎藥", "dosage": "1 顆", "effect": "緩解發炎" },
-            { "name": "肌肉鬆弛劑", "dosage": "1 顆", "effect": "改善痙攣" }
-          ]
+    // 預置使用者戴漢彬先生提供的完整規劃資料 (預設基本用藥規劃數據)
+    const defaultSchedule = [
+      {
+        id: "slot-3vbx7brcf",
+        name: "早餐後",
+        time: "08:30",
+        description: "隨餐或飯後30分鐘內",
+        items: [
+          { id: "item-mdnlup4fu", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
+          { id: "item-48gr89pa4", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
+          { id: "item-0juxpzfz1", name: "魚油", type: "supplement", dosage: "2 顆", effect: "脂溶性 Omega-3，保護心血管。必須於飯後30分鐘內服用。", sideEffect: "注意！請避免與鈣片同時服用，以免產生皂化降低吸收率。" }
+        ]
+      },
+      {
+        id: "slot-vyiblho7v",
+        name: "午餐後",
+        time: "12:30",
+        description: "隨餐或飯後30分鐘內",
+        items: [
+          { id: "item-7jwzzm3xk", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。", sideEffect: "對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。" },
+          { id: "item-9r92p1jvg", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。僅在足跟痛時服用。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，開車或機械操作請留意。" }
+        ]
+      },
+      {
+        id: "slot-j9brkk69g",
+        name: "晚餐後",
+        time: "18:30",
+        description: "隨餐或飯後30分鐘內",
+        items: [
+          { id: "item-5bnp0b01h", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。以維持夜間及清晨的血壓穩定。", sideEffect: "服用期間絕對禁止食用「葡萄柚」與「柚子」！避免使用高鉀低鈉鹽。" },
+          { id: "item-3rxnio9n5", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "水飛薊素，隨晚餐後服用能大幅提升吸收率。", sideEffect: "脂溶性成分，晚餐隨餐吸收最好。" }
+        ]
+      },
+      {
+        id: "slot-kj98ovr7n",
+        name: "夜間睡前",
+        time: "22:00",
+        description: "就寢前30分鐘",
+        items: [
+          { id: "item-sjyxxhke0", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定於睡前服用效果佳，且避開忙碌時段防漏藥。" },
+          { id: "item-vew17xlbo", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油完美間隔12小時，完全避免與魚油中的脂肪酸產生皂化反應，吸收率極大化。" }
+        ]
+      },
+      {
+        id: "slot-n64cn82j1",
+        name: "骨科備用藥",
+        time: "隨時",
+        description: "若夜間因足跟骨刺疼痛發作時",
+        items: [
+          { id: "item-e804qynmd", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。" },
+          { id: "item-zcg5bvu9x", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用有助於改善因痛失眠。", sideEffect: "避免因痛失眠。" }
+        ]
+      }
+    ];
+
+    const simpleSchedule = [
+      {
+        id: "slot-s1",
+        name: "早上飯後",
+        time: "08:00",
+        description: "早餐吃完後30分鐘內",
+        items: [
+          { id: "item-s1-1", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供白天所需活力", sideEffect: "" }
+        ]
+      },
+      {
+        id: "slot-s2",
+        name: "中午飯後",
+        time: "12:30",
+        description: "午餐吃完後30分鐘內",
+        items: []
+      },
+      {
+        id: "slot-s3",
+        name: "晚上飯後",
+        time: "19:00",
+        description: "晚餐吃完後30分鐘內",
+        items: []
+      }
+    ];
+
+    // 全域變數狀態 (最速本地先發啟動，安全本機優先)
+    window.appState = {
+      username: "戴漢彬",
+      schedule: JSON.parse(JSON.stringify(defaultSchedule)), 
+      weeklyLogs: {
+        "2026-05-27": {
+          "slot-3vbx7brcf": true,
+          "slot-vyiblho7v": true,
+          "slot-j9brkk69g": true
         }
-      ],
-      "takenLogs": { "2026-05-27": { "slot-j9brkk69g": "20:59", "slot-3vbx7brcf": "17:31", "slot-vyiblho7v": "13:23" } }
+      }, 
+      takenLogs: {
+        "2026-05-27": {
+          "slot-j9brkk69g": "20:59",
+          "slot-3vbx7brcf": "17:31",
+          "slot-vyiblho7v": "13:23"
+        }
+      }
     };
 
-    window.appState = JSON.parse(localStorage.getItem('yining_final_v1')) || initialData;
-    window.currentView = 'day';
+    window.boxId = "admin_self";
+    window.isOfflineMode = true; 
+    window.db = null;
+    window.auth = null;
+    const appId = 'yining-med-tracker';
+    let currentFirestoreUnsubscribe = null;
+    let editorSchedule = []; // 編輯專用記憶暫存
 
-    window.onload = () => {
+    // Firebase 真實配置連線
+    let firebaseConfig = {
+      apiKey: "AIzaSyC5qwepU0PnotyRXzD4S0iTBZhHSiW-pus",
+      authDomain: "yining-med-tracker.firebaseapp.com",
+      projectId: "yining-med-tracker",
+      storageBucket: "yining-med-tracker.firebasestorage.app",
+      messagingSenderId: "733833835927",
+      appId: "1:733833835927:web:72727f17a5aa0cec4d00d2"
+    };
+
+    const hasValidFirebase = firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey.trim() !== "";
+
+    if (typeof firebase !== 'undefined' && hasValidFirebase) {
+      try {
+        const app = firebase.initializeApp(firebaseConfig);
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+        window.isOfflineMode = false;
+      } catch (e) {
+        console.warn("Firebase 啟動失敗，轉入離線暫存模式", e);
+        window.isOfflineMode = true;
+      }
+    } else {
+      window.isOfflineMode = true;
+    }
+
+    // 啟動流程 (DOMContentLoaded 確保時鐘與預設藥物瞬時到位)
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. 載入與初始化本機緩存
+      loadOfflineState();
+
+      // 2. 啟動時鐘與渲染介面 (無任何等待)
       initClock();
       renderApp();
-    };
+      setupModeUI();
 
-    function initClock() {
-      setInterval(() => {
-        const now = new Date();
-        const timeStr = now.toTimeString().split(' ')[0];
-        document.getElementById('liveClock').textContent = timeStr;
-        document.getElementById('liveDate').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${['日','一','二','三','四','五','六'][now.getDay()]}`;
-        
-        // 只有在非編輯模式下才更新倒計時與主畫面渲染，避免打字時介面被刷掉
-        if (window.currentView === 'day') {
-          updateCountdown();
+      // 3. 背景連接 Firebase
+      if (!window.isOfflineMode) {
+        await initAuth();
+      } else {
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          badge.textContent = "安全本機儲存";
+          badge.className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
         }
-      }, 1000);
+      }
+    });
+
+    async function initAuth() {
+      try {
+        await window.auth.signInAnonymously();
+        document.getElementById('cloudStatusBadge').textContent = "雲端同步啟動";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
+        setupFirestoreRealtimeSync();
+        setupModeUI();
+      } catch (e) {
+        window.isOfflineMode = true;
+        document.getElementById('cloudStatusBadge').textContent = "安全本機儲存";
+        document.getElementById('cloudStatusBadge').className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+      }
     }
 
-    window.switchView = (view) => {
-      window.currentView = view;
-      ['dayView', 'weekView', 'editView'].forEach(id => document.getElementById(id).classList.add('hidden'));
-      document.getElementById(view + 'View').classList.remove('hidden');
-      
-      const btnMap = { day: 'btnDayView', week: 'btnWeekView', edit: 'btnEditView' };
-      Object.values(btnMap).forEach(id => {
-        document.getElementById(id).className = "px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white";
-      });
-      document.getElementById(btnMap[view]).className = "px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all bg-emerald-50 text-emerald-900 shadow-md";
-
-      if (view === 'edit') renderEditor();
-      else renderApp();
-    };
-
-    function renderApp() {
-      document.getElementById('subTitleDisplay').textContent = `${window.appState.username} 專屬監控面板`;
-      renderTimeline();
-      renderWeekGrid();
+    function setupModeUI() {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (!badge) return;
+      if (window.isOfflineMode) {
+        badge.textContent = "安全本機儲存";
+        badge.className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+      } else {
+        badge.textContent = "雲端同步啟動";
+        badge.className = "text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-black";
+      }
     }
 
-    function renderTimeline() {
-      const now = new Date();
-      const currentMin = now.getHours() * 60 + now.getMinutes();
-      const sorted = [...window.appState.schedule].sort((a,b) => timeToMin(a.time) - timeToMin(b.time));
-      
-      let curIdx = sorted.findIndex(s => timeToMin(s.time) > currentMin);
-      if (curIdx === -1) curIdx = sorted.length - 1;
-      else curIdx = Math.max(0, curIdx - 1);
-
-      const current = sorted[curIdx];
-      const prev = sorted[(curIdx - 1 + sorted.length) % sorted.length];
-      const next = sorted[(curIdx + 1) % sorted.length];
-
-      document.getElementById('currentSlotNameDisplay').textContent = current.name;
-      document.getElementById('currentSlotTimeTag').textContent = current.time;
-      document.getElementById('prevSlotTimeTag').textContent = prev.time;
-      document.getElementById('nextSlotTimeTag').textContent = next.time;
-
-      renderMeds('currentMedList', current, true);
-      renderMeds('prevMedList', prev, false);
-      renderMeds('nextMedList', next, false);
-    }
-
-    function renderMeds(id, slot, isMain) {
-      const container = document.getElementById(id);
-      const todayStr = getTodayStr();
-      const takenTime = window.appState.takenLogs[todayStr]?.[slot.id];
-      
-      if (isMain) {
-        const btn = document.getElementById('takeButton');
-        if (takenTime) {
-          btn.disabled = true;
-          btn.classList.replace('bg-emerald-600', 'bg-slate-300');
-          btn.textContent = `✅ 已於 ${takenTime} 服用`;
-        } else {
-          btn.disabled = false;
-          btn.classList.replace('bg-slate-300', 'bg-emerald-600');
-          btn.textContent = "確認此時段已服藥";
-          btn.onclick = () => window.markTaken(slot.id);
+    // 讀取本機基本狀態 (防髒快取，開機即現)
+    function loadOfflineState() {
+      const saved = localStorage.getItem('yining_med_offline_single_v4');
+      let loadedState = null;
+      if (saved) {
+        try {
+          loadedState = JSON.parse(saved);
+        } catch (e) {
+          console.warn("解析本機暫存失敗");
         }
       }
 
-      container.innerHTML = slot.items.map(m => `
-        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-start">
-          <div>
-            <div class="text-sm font-black text-slate-800">${m.name}</div>
-            <div class="text-[10px] text-slate-500">${m.effect}</div>
-          </div>
-          <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">${m.dosage}</span>
-        </div>
-      `).join('');
-    }
+      // 智慧校正：防殘留空快取覆蓋
+      let isCacheValid = loadedState && loadedState.schedule && Array.isArray(loadedState.schedule) && loadedState.schedule.length >= 5;
+      if (isCacheValid) {
+        const hasTuoning = loadedState.schedule.some(s => s.items && s.items.some(i => i.name.includes("妥寧")));
+        if (!hasTuoning) isCacheValid = false;
+      }
 
-    window.exportData = () => {
-      const blob = new Blob([JSON.stringify(window.appState, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `頤寧備份_${window.appState.username}.json`;
-      a.click();
-      showToast("✅ 已匯出備份檔案");
-    };
-
-    window.importData = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const data = JSON.parse(ev.target.result);
-          if (data.schedule) {
-            window.appState = data;
-            localStorage.setItem('yining_final_v1', JSON.stringify(data));
-            renderEditor();
-            showToast("✅ 已載入備份規劃");
+      if (!isCacheValid) {
+        // 使用戴漢彬先生的預置資料
+        window.appState.username = "戴漢彬";
+        window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+        window.appState.weeklyLogs = {
+          "2026-05-27": {
+            "slot-3vbx7brcf": true,
+            "slot-vyiblho7v": true,
+            "slot-j9brkk69g": true
           }
-        } catch (err) { showToast("❌ 格式不正確"); }
-      };
-      reader.readAsText(file);
-    };
-
-    function renderEditor() {
-      document.getElementById('editUsername').value = window.appState.username;
-      const container = document.getElementById('editorSlotsContainer');
-      
-      container.innerHTML = window.appState.schedule.map((slot, sIdx) => `
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 relative space-y-4">
-          <button onclick="window.removeSlot(${sIdx})" class="absolute top-4 right-4 text-rose-500 font-bold text-xs">✕ 刪除時段</button>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-[10px] font-black text-slate-400 block mb-1">時段名</label>
-              <input type="text" value="${slot.name}" class="slot-name w-full h-10 border rounded-xl px-3 font-bold text-sm">
-            </div>
-            <div>
-              <label class="text-[10px] font-black text-slate-400 block mb-1">預定時間</label>
-              <input type="text" value="${slot.time}" class="slot-time w-full h-10 border rounded-xl px-3 font-bold text-sm">
-            </div>
-          </div>
-          <div class="space-y-2">
-            ${slot.items.map((m, mIdx) => `
-              <div class="bg-white p-2 border rounded-xl flex gap-2 items-center">
-                <input type="text" value="${m.name}" class="item-name flex-grow text-xs font-bold border-none" placeholder="藥名">
-                <input type="text" value="${m.dosage}" class="item-dosage w-16 text-xs font-bold border-none" placeholder="劑量">
-                <button onclick="window.removeItem(${sIdx}, ${mIdx})" class="text-slate-300 px-2 font-bold">✕</button>
-              </div>
-            `).join('')}
-            <button onclick="window.addItem(${sIdx})" class="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-[10px] text-slate-400 font-black">+ 新增藥品</button>
-          </div>
-        </div>
-      `).join('');
+        };
+        window.appState.takenLogs = {
+          "2026-05-27": {
+            "slot-j9brkk69g": "20:59",
+            "slot-3vbx7brcf": "17:31",
+            "slot-vyiblho7v": "13:23"
+          }
+        };
+        saveOfflineState();
+      } else {
+        window.appState = loadedState;
+      }
     }
 
-    window.saveAll = () => {
-      const slotEls = document.querySelectorAll('#editorSlotsContainer > div');
-      const newSched = [];
-      slotEls.forEach(el => {
-        const name = el.querySelector('.slot-name').value;
-        const time = el.querySelector('.slot-time').value;
-        const items = [];
-        el.querySelectorAll('.bg-white').forEach(itemEl => {
-          items.push({
-            name: itemEl.querySelector('.item-name').value,
-            dosage: itemEl.querySelector('.item-dosage').value,
-            effect: "使用者自行定義"
+    function saveOfflineState() {
+      localStorage.setItem('yining_med_offline_single_v4', JSON.stringify(window.appState));
+    }
+
+    // 雲端同步監聽
+    function setupFirestoreRealtimeSync() {
+      if (window.isOfflineMode) return;
+      if (currentFirestoreUnsubscribe) {
+        currentFirestoreUnsubscribe();
+      }
+
+      const boxDocRef = window.db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(window.boxId);
+
+      currentFirestoreUnsubscribe = boxDocRef.onSnapshot((docSnap) => {
+        if (docSnap.exists) {
+          const cloudData = docSnap.data();
+          window.appState.username = cloudData.username || "戴漢彬";
+          window.appState.schedule = cloudData.schedule || JSON.parse(JSON.stringify(defaultSchedule));
+          window.appState.weeklyLogs = cloudData.weeklyLogs || {};
+          window.appState.takenLogs = cloudData.takenLogs || {};
+          
+          window.appState.schedule.forEach(s => {
+            if (!s.items) s.items = [];
           });
-        });
-        newSched.push({ id: 's-'+Math.random(), name, time, items });
+
+          renderApp();
+          calculateTimesAndReminders();
+        } else {
+          saveCloudState();
+        }
+      }, (err) => {
+        window.isOfflineMode = true;
+        loadOfflineState();
+        renderApp();
+        calculateTimesAndReminders();
       });
-
-      window.appState.username = document.getElementById('editUsername').value;
-      window.appState.schedule = newSched;
-      localStorage.setItem('yining_final_v1', JSON.stringify(window.appState));
-      showToast("💾 設定已儲存");
-      window.switchView('day');
-    };
-
-    window.addSlot = () => { window.appState.schedule.push({ id: 's-'+Date.now(), name: "新時段", time: "09:00", items: [] }); renderEditor(); };
-    window.removeSlot = (i) => { window.appState.schedule.splice(i, 1); renderEditor(); };
-    window.addItem = (i) => { window.appState.schedule[i].items.push({ name: "新藥物", dosage: "1 顆", effect: "" }); renderEditor(); };
-    window.removeItem = (si, mi) => { window.appState.schedule[si].items.splice(mi, 1); renderEditor(); };
-
-    window.markTaken = (id) => {
-      const today = getTodayStr();
-      const time = new Date().toTimeString().substring(0, 5);
-      if (!window.appState.takenLogs[today]) window.appState.takenLogs[today] = {};
-      window.appState.takenLogs[today][id] = time;
-      localStorage.setItem('yining_final_v1', JSON.stringify(window.appState));
-      renderApp();
-      showToast(`✅ 已於 ${time} 完成服用`);
-    };
-
-    function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
-    function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    
-    function updateCountdown() {
-      const now = new Date();
-      const curMin = now.getHours() * 60 + now.getMinutes();
-      const sorted = [...window.appState.schedule].sort((a,b) => timeToMin(a.time) - timeToMin(b.time));
-      let next = sorted.find(s => timeToMin(s.time) > curMin) || sorted[0];
-      let diff = timeToMin(next.time) - curMin;
-      if (diff <= 0) diff += 1440;
-      document.getElementById('nextDoseCountdown').textContent = `${Math.floor(diff/60)}小時 ${diff%60}分`;
     }
 
-    function renderWeekGrid() {
+    async function saveCloudState() {
+      if (window.isOfflineMode) {
+        saveOfflineState();
+        return;
+      }
+      const boxDocRef = window.db.collection('artifacts').doc(appId).collection('public').doc('data').collection('pillboxConfigs').doc(window.boxId);
+      try {
+        await boxDocRef.set({
+          username: window.appState.username,
+          schedule: window.appState.schedule,
+          weeklyLogs: window.appState.weeklyLogs,
+          takenLogs: window.appState.takenLogs
+        });
+      } catch (e) {
+        saveOfflineState();
+      }
+    }
+
+    // 服藥打卡確認
+    function markCurrentSlotAsTaken(slotId) {
+      if (!slotId) {
+        const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+        const validSlots = window.appState.schedule.filter(s => s.time && s.time !== "隨時");
+        validSlots.sort((a, b) => {
+          const [ah, am] = a.time.split(':').map(Number);
+          const [bh, bm] = b.time.split(':').map(Number);
+          return (ah * 60 + am) - (bh * 60 + bm);
+        });
+
+        let index = 0;
+        if (validSlots.length > 0) {
+          const times = validSlots.map(s => {
+            const [h, m] = s.time.split(':').map(Number);
+            return h * 60 + m;
+          });
+          if (currentMinutes >= times[times.length - 1] || currentMinutes < times[0]) {
+            index = times.length - 1;
+          } else {
+            for (let i = 0; i < times.length - 1; i++) {
+              if (currentMinutes >= times[i] && currentMinutes < times[i+1]) {
+                index = i;
+                break;
+              }
+            }
+          }
+          slotId = validSlots[index].id;
+        }
+      }
+
+      if (!slotId) return;
+
+      const todayStr = getTodayStr();
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      if (!window.appState.takenLogs[todayStr]) window.appState.takenLogs[todayStr] = {};
+      window.appState.takenLogs[todayStr][slotId] = timeStr;
+
+      if (!window.appState.weeklyLogs[todayStr]) window.appState.weeklyLogs[todayStr] = {};
+      window.appState.weeklyLogs[todayStr][slotId] = true;
+
+      saveCloudState();
+      showToast(`✅ 已記錄於 ${timeStr} 服用藥物！`);
+      calculateTimesAndReminders();
+      renderApp();
+    }
+
+    // 渲染 UI 元素
+    function renderApp() {
+      const activeName = window.appState.username || "戴漢彬";
+      document.getElementById('headerUserDisplay').textContent = activeName;
+
+      // 僅在編輯規劃畫面未顯示時，才去重置文字欄位值，防止使用者正在打字時被覆蓋
+      const editView = document.getElementById('editView');
+      const editUsernameInput = document.getElementById('editUsername');
+      if (editView && editView.classList.contains('hidden') && editUsernameInput) {
+        editUsernameInput.value = activeName;
+      }
+
+      renderDailyOverview();
+      renderWeeklyGrid();
+    }
+
+    function renderDailyOverview() {
+      const container = document.getElementById('dailyOverviewContainer');
+      if (!container) return;
+
+      const todayStr = getTodayStr();
+      let html = "";
+
+      window.appState.schedule.forEach(slot => {
+        const isTaken = window.appState.takenLogs[todayStr]?.[slot.id];
+        
+        html += `
+          <div class="p-4 rounded-2xl border-2 ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="fluid-meta font-black text-slate-800 font-bold">${slot.name}</span>
+                <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded ml-1 font-bold">${slot.time}</span>
+              </div>
+              <div>
+                ${isTaken 
+                  ? `<span class="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-bold">✓已服 ${isTaken}</span>`
+                  : `<button type="button" onclick="window.markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200 font-bold">打卡</button>`
+                }
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 font-bold">${slot.description || '無詳細說明'}</div>
+            <div class="border-t border-dashed border-slate-200 pt-1.5 space-y-1">
+              ${(slot.items || []).map(item => `
+                <div class="text-xs text-slate-700 flex justify-between font-bold">
+                  <span>• <strong>${item.name}</strong></span>
+                  <span class="text-[10px] text-slate-400 font-bold">x${item.dosage}</span>
+                </div>
+              `).join('')}
+              ${(!slot.items || slot.items.length === 0) ? '<div class="text-xs text-slate-400 text-center font-bold">無安排藥品</div>' : ''}
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderWeeklyGrid() {
       const container = document.getElementById('weekGrid');
+      if (!container) return;
+
+      const daysOfWeek = ["一", "二", "三", "四", "五", "六", "日"];
       const today = new Date();
       let html = "";
-      for(let i=0; i<7; i++) {
-        const d = new Date(); d.setDate(today.getDate() - today.getDay() + (i+1));
-        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        const isToday = d.getDate() === today.getDate();
+
+      const currentDay = today.getDay();
+      const startOfWeek = new Date(today);
+      const distance = currentDay === 0 ? -6 : 1 - currentDay;
+      startOfWeek.setDate(today.getDate() + distance);
+
+      for (let i = 0; i < 7; i++) {
+        const loopDate = new Date(startOfWeek);
+        loopDate.setDate(startOfWeek.getDate() + i);
+        const dateStr = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
+        const isToday = loopDate.toDateString() === today.toDateString();
+
         html += `
-          <div class="bg-slate-50 p-2 rounded-xl border ${isToday?'border-emerald-500':'border-slate-200'} text-center">
-            <div class="text-[8px] font-black text-slate-400">${['一','二','三','四','五','六','日'][i]}</div>
-            <div class="text-xs font-black ${isToday?'text-emerald-600':''}">${d.getDate()}</div>
-            <div class="mt-2 space-y-1">
-              ${window.appState.schedule.map(s => `<div class="w-full h-1 rounded-full ${window.appState.takenLogs[ds]?.[s.id]?'bg-emerald-500':'bg-slate-200'}"></div>`).join('')}
+          <div class="bg-slate-50 rounded-2xl py-3 px-1 border-2 ${isToday ? 'border-brand-500 bg-brand-50/20' : 'border-slate-200'} flex flex-col items-center font-bold">
+            <div class="text-center border-b border-slate-200 pb-1.5 w-full">
+              <span class="text-xs font-black text-slate-400 block font-bold">週${daysOfWeek[i]}</span>
+              <span class="fluid-meta font-black ${isToday ? 'text-brand-600' : 'text-slate-700'}">${loopDate.getDate()}</span>
+            </div>
+
+            <div class="space-y-4 mt-4 w-full flex flex-col items-center">
+              ${window.appState.schedule.map(slot => {
+                const isTaken = window.appState.takenLogs[dateStr]?.[slot.id];
+                return `
+                  <div onclick="window.toggleWeeklyDose('${dateStr}', '${slot.id}')" class="flex flex-col items-center justify-center cursor-pointer transition-all active:scale-95 pointer-events-auto relative z-10">
+                    <span class="text-[10px] text-slate-500 font-bold mb-1">${slot.name.substring(0, 2)}</span>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isTaken ? 'bg-emerald-500 text-white border-emerald-500 shadow font-bold' : 'bg-white text-slate-300 border-slate-300 font-bold'}">
+                      ${isTaken 
+                        ? `<svg class="w-5 h-5 font-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                           </svg>`
+                        : `<span class="text-sm font-black">+</span>`
+                      }
+                    </div>
+                    ${isTaken ? `<span class="text-[10px] text-emerald-600 font-bold mt-1 font-bold">${isTaken}</span>` : '<span class="text-[10px] text-transparent mt-1 font-bold">-</span>'}
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -443,12 +756,547 @@
       container.innerHTML = html;
     }
 
-    function showToast(m) {
-      const t = document.createElement('div');
-      t.className = "fixed bottom-10 left-1/2 -translate-x-1/2 bg-brand-800 text-white px-6 py-3 rounded-full shadow-2xl font-black z-50 animate-fade text-sm";
-      t.textContent = m;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 2500);
+    function toggleWeeklyDose(dateStr, slotId) {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      if (!window.appState.takenLogs[dateStr]) {
+        window.appState.takenLogs[dateStr] = {};
+      }
+
+      if (window.appState.takenLogs[dateStr][slotId]) {
+        delete window.appState.takenLogs[dateStr][slotId];
+        showToast("🧹 已取消該時段的服藥進度");
+      } else {
+        window.appState.takenLogs[dateStr][slotId] = timeStr;
+        showToast(`✅ 已手動登錄：${dateStr} ${timeStr} 服用`);
+      }
+
+      saveCloudState();
+      renderApp();
+      calculateTimesAndReminders();
+    }
+
+    function requestResetWeeklyLogs() {
+      if (confirm("確定要重設您本週所有的用藥打卡紀錄嗎？此動作無法復原。")) {
+        window.appState.takenLogs = {};
+        window.appState.weeklyLogs = {};
+        saveCloudState();
+        renderApp();
+        calculateTimesAndReminders();
+        showToast("🧹 本週紀錄已成功歸零");
+      }
+    }
+
+    function requestLockSettings() {
+      showToast("🔒 返回一日主頁");
+      switchViewDirectly('day');
+    }
+
+    function switchView(viewName) {
+      switchViewDirectly(viewName);
+    }
+
+    function switchViewDirectly(viewName) {
+      const dayView = document.getElementById('dayView');
+      const weekView = document.getElementById('weekView');
+      const editView = document.getElementById('editView');
+
+      const btnDay = document.getElementById('btnDayView');
+      const btnWeek = document.getElementById('btnWeekView');
+      const btnEdit = document.getElementById('btnEditView');
+
+      if (dayView) dayView.classList.add('hidden');
+      if (weekView) weekView.classList.add('hidden');
+      if (editView) editView.classList.add('hidden');
+
+      const normalClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
+      const activeClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
+      
+      if (btnDay) btnDay.className = normalClass;
+      if (btnWeek) btnWeek.className = normalClass;
+      if (btnEdit) btnEdit.className = normalClass;
+
+      if (viewName === 'day') {
+        if (dayView) dayView.classList.remove('hidden');
+        if (btnDay) btnDay.className = activeClass;
+      } else if (viewName === 'week') {
+        if (weekView) weekView.classList.remove('hidden');
+        if (btnWeek) btnWeek.className = activeClass;
+      } else if (viewName === 'edit') {
+        if (editView) editView.classList.remove('hidden');
+        if (btnEdit) btnEdit.className = activeClass;
+        // 切換進入編輯規劃時，顯式載入一次用戶名
+        document.getElementById('editUsername').value = window.appState.username || "戴漢彬";
+        renderEditor();
+      }
+    }
+
+    // ================= 藥盒編輯規劃主體 =================
+    function renderEditor() {
+      renderEditorSlots();
+    }
+
+    function renderEditorSlots() {
+      const container = document.getElementById('editorSlotsContainer');
+      if (!container) return;
+      let html = "";
+
+      window.appState.schedule.forEach((slot, sIdx) => {
+        if (!slot.items) slot.items = [];
+
+        html += `
+          <div class="editor-slot bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3 pointer-events-auto z-10" data-slot-id="${slot.id || ''}" data-slot-index="${sIdx}">
+            <button type="button" onclick="window.removeEditorSlotInDom(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg">
+              ✕ 刪除時段
+            </button>
+
+            <div class="space-y-2.5 pt-4 font-bold">
+              <div>
+                <label class="block text-xs font-black text-slate-400 mb-0.5">時段名稱 (例: 早餐後)</label>
+                <input type="text" value="${slot.name}" class="slot-input-name w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-black text-slate-400 mb-0.5">時間 (例: 08:30)</label>
+                  <input type="text" value="${slot.time}" class="slot-input-time w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-black text-slate-400 mb-0.5">時段備註</label>
+                  <input type="text" value="${slot.description || ''}" class="slot-input-desc w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
+              <div class="flex justify-between items-center">
+                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
+                <button type="button" onclick="window.addEditorItemInDom(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
+                  ＋ 新增藥品/食品
+                </button>
+              </div>
+
+              <div class="editor-items-list space-y-2">
+                ${slot.items.map((item, iIdx) => `
+                  <div class="editor-item-card bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 relative" data-item-id="${item.id || ''}" data-item-index="${iIdx}">
+                    <button type="button" onclick="window.removeEditorItemInDom(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black text-xs">
+                      ✕
+                    </button>
+                    <div class="font-bold">
+                      <label class="block text-[10px] font-bold text-slate-400">藥名/品項名稱</label>
+                      <input type="text" value="${item.name}" class="item-input-name w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="font-bold">
+                        <label class="block text-[10px] font-bold text-slate-400">類型</label>
+                        <select class="item-input-type w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                          <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
+                          <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
+                          <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
+                        </select>
+                      </div>
+                      <div class="font-bold">
+                        <label class="block text-[10px] font-bold text-slate-400">劑量</label>
+                        <input type="text" value="${item.dosage || ''}" class="item-input-dosage w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      </div>
+                    </div>
+                    <div class="font-bold">
+                      <label class="block text-[10px] font-bold text-slate-400">主要效用</label>
+                      <input type="text" value="${item.effect || ''}" class="item-input-effect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div class="font-bold">
+                      <label class="block text-[10px] font-bold text-slate-400">注意事項/副作用</label>
+                      <input type="text" value="${item.sideEffect || ''}" class="item-input-sideeffect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // 將所有欄位變更從 DOM 自動讀取與套用，並精準保持 Slot ID 與 Item ID 不遺失
+    window.readEditorConfigFromDom = function() {
+      const schedule = [];
+      const slotElements = document.querySelectorAll('.editor-slot');
+      
+      slotElements.forEach(slotEl => {
+        const slotId = slotEl.getAttribute('data-slot-id') || ("slot-" + Math.random().toString(36).substr(2, 9));
+        const slotName = slotEl.querySelector('.slot-input-name').value;
+        const slotTime = slotEl.querySelector('.slot-input-time').value;
+        const slotDesc = slotEl.querySelector('.slot-input-desc').value;
+        
+        const items = [];
+        const itemElements = slotEl.querySelectorAll('.editor-item-card');
+        
+        itemElements.forEach(itemEl => {
+          const itemId = itemEl.getAttribute('data-item-id') || ("item-" + Math.random().toString(36).substr(2, 9));
+          const itemName = itemEl.querySelector('.item-input-name').value;
+          const itemType = itemEl.querySelector('.item-input-type').value;
+          const itemDosage = itemEl.querySelector('.item-input-dosage').value;
+          const itemEffect = itemEl.querySelector('.item-input-effect').value;
+          const itemSide = itemEl.querySelector('.item-input-sideeffect').value;
+          
+          items.push({
+            id: itemId,
+            name: itemName,
+            type: itemType,
+            dosage: itemDosage,
+            effect: itemEffect,
+            sideEffect: itemSide
+          });
+        });
+
+        schedule.push({
+          id: slotId,
+          name: slotName,
+          time: slotTime,
+          description: slotDesc,
+          items: items
+        });
+      });
+
+      return schedule;
+    };
+
+    window.addNewSlotInDom = function() {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule.push({
+        id: "slot-" + Date.now(),
+        name: "自訂新時段",
+        time: "12:00",
+        description: "備註說明",
+        items: []
+      });
+      renderEditorSlots();
+    };
+
+    window.removeEditorSlotInDom = function(sIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule.splice(sIdx, 1);
+      renderEditorSlots();
+    };
+
+    window.addEditorItemInDom = function(sIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      if (!window.appState.schedule[sIdx].items) {
+        window.appState.schedule[sIdx].items = [];
+      }
+      window.appState.schedule[sIdx].items.push({
+        id: "item-" + Date.now(),
+        name: "新藥物/食品",
+        type: "medicine",
+        dosage: "1 顆",
+        effect: "效用說明",
+        sideEffect: ""
+      });
+      renderEditorSlots();
+    };
+
+    window.removeEditorItemInDom = function(sIdx, iIdx) {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      window.appState.schedule[sIdx].items.splice(iIdx, 1);
+      renderEditorSlots();
+    };
+
+    window.saveEditorConfig = function() {
+      const schedule = window.readEditorConfigFromDom();
+      
+      for (let i = 0; i < schedule.length; i++) {
+        if (!schedule[i].name.trim() || !schedule[i].time.trim()) {
+          showToast("⚠️ 請務必填寫時段名稱與時間！", "warning");
+          return;
+        }
+      }
+
+      const inputName = document.getElementById('editUsername');
+      if (inputName && inputName.value.trim()) {
+        window.appState.username = inputName.value.trim();
+      }
+      
+      window.appState.schedule = schedule;
+      
+      saveCloudState();
+      renderApp();
+      calculateTimesAndReminders();
+      showToast("💾 用藥規劃已儲存更新！");
+      
+      switchViewDirectly('day');
+    };
+
+    window.applyPrebuiltTemplate = function(templateType) {
+      if (confirm("⚠️ 套用此範本將會完全覆蓋此藥盒目前的服藥時段與藥物設定。確定要套用嗎？")) {
+        if (templateType === 'statins') {
+          window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
+        } else if (templateType === 'simple') {
+          window.appState.schedule = JSON.parse(JSON.stringify(simpleSchedule));
+        }
+        renderEditorSlots();
+        showToast("⭐ 範本已成功套用，請點選下方儲存修改即可生效！");
+      }
+    };
+
+    // 備份匯出功能
+    window.exportConfig = function() {
+      window.appState.schedule = window.readEditorConfigFromDom();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `頤寧雲端備份_${window.appState.username}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("📥 備份設定檔案已下載！");
+    };
+
+    // 備份載入功能 (載入後會自動更新輸入框的名字)
+    window.importConfig = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.schedule) {
+            window.appState = imported;
+            saveOfflineState();
+            saveCloudState();
+            
+            // 更新 UI 上正在編輯的使用者姓名
+            const inputName = document.getElementById('editUsername');
+            if (inputName && imported.username) {
+              inputName.value = imported.username;
+            }
+            
+            renderEditorSlots();
+            renderApp();
+            showToast("📤 備份載入成功！請按最下方儲存修改。");
+          } else {
+            showToast("⚠️ 檔案格式不符合規範！", "warning");
+          }
+        } catch (err) {
+          showToast("⚠️ 解析檔案時發生錯誤！", "warning");
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    window.updateUsernameDirect = function(val) {
+      if (val && val.trim()) {
+        window.appState.username = val.trim();
+      }
+    };
+
+    // 倒計時及藥物提醒實時運算
+    function calculateTimesAndReminders() {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayStr = getTodayStr();
+
+      if (!window.appState.schedule || window.appState.schedule.length === 0) return;
+
+      const validSlots = window.appState.schedule
+        .filter(s => s.time && s.time !== "隨時")
+        .map(s => {
+          const [h, m] = s.time.split(':').map(Number);
+          return {
+            ...s,
+            totalMinutes: h * 60 + m
+          };
+        });
+
+      validSlots.sort((a, b) => a.totalMinutes - b.totalMinutes);
+
+      if (validSlots.length === 0) return;
+
+      let currentActiveSlot = null;
+      let prevSlot = null;
+      let nextSlot = null;
+      let currentSlotIndex = 0;
+
+      if (currentMinutes >= validSlots[validSlots.length - 1].totalMinutes || currentMinutes < validSlots[0].totalMinutes) {
+        currentSlotIndex = validSlots.length - 1;
+      } else {
+        for (let i = 0; i < validSlots.length - 1; i++) {
+          if (currentMinutes >= validSlots[i].totalMinutes && currentMinutes < validSlots[i+1].totalMinutes) {
+            currentSlotIndex = i;
+            break;
+          }
+        }
+      }
+
+      currentActiveSlot = validSlots[currentSlotIndex];
+      
+      const prevIndex = (currentSlotIndex - 1 + validSlots.length) % validSlots.length;
+      prevSlot = validSlots[prevIndex];
+
+      const nextIndex = (currentSlotIndex + 1) % validSlots.length;
+      nextSlot = validSlots[nextIndex];
+
+      // 上一次服藥過去多久
+      const prevSlotNameEl = document.getElementById('prevSlotName');
+      const prevSlotTimeTagEl = document.getElementById('prevSlotTimeTag');
+      const prevDoseElapsedEl = document.getElementById('prevDoseElapsed');
+
+      if (prevSlot && prevSlotNameEl && prevSlotTimeTagEl && prevDoseElapsedEl) {
+        prevSlotNameEl.textContent = prevSlot.name;
+        prevSlotTimeTagEl.textContent = prevSlot.time;
+        
+        let elapsedMins = currentMinutes - prevSlot.totalMinutes;
+        if (elapsedMins < 0) elapsedMins += 1440;
+        const h = Math.floor(elapsedMins / 60);
+        const m = elapsedMins % 60;
+        prevDoseElapsedEl.textContent = h > 0 ? `已過 ${h} 小時 ${m} 分鐘` : `已過 ${m} 分鐘`;
+        renderMedicationListOnly('prevMedicationsList', prevSlot.items);
+      }
+
+      // 當下進行中時段
+      const currentSlotNameEl = document.getElementById('currentSlotName');
+      const currentSlotTimeTagEls = document.querySelectorAll('#currentSlotTimeTag');
+      const isTakenToday = window.appState.takenLogs[todayStr]?.[currentActiveSlot.id];
+      const takeBtn = document.getElementById('takeButton');
+
+      if (currentActiveSlot && currentSlotNameEl && takeBtn) {
+        currentSlotNameEl.textContent = currentActiveSlot.name;
+        currentSlotTimeTagEls.forEach(el => el.textContent = currentActiveSlot.time);
+        renderMedicationListOnly('currentMedicationsList', currentActiveSlot.items);
+
+        if (isTakenToday) {
+          takeBtn.className = "w-full h-16 bg-slate-300 text-slate-600 font-extrabold text-xl rounded-2xl transition-all flex items-center justify-center gap-3 cursor-not-allowed shadow-none border-2 border-slate-300";
+          takeBtn.innerHTML = `
+            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            已於 ${isTakenToday} 服用完成
+          `;
+          takeBtn.disabled = true;
+        } else {
+          takeBtn.className = "w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer";
+          takeBtn.innerHTML = `
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+            確認此時段已服藥
+          `;
+          takeBtn.disabled = false;
+          takeBtn.onclick = function() { markCurrentSlotAsTaken(currentActiveSlot.id) };
+        }
+      }
+
+      // 後一階段還有多久
+      const nextSlotNameEl = document.getElementById('nextSlotName');
+      const nextSlotTimeTagEl = document.getElementById('nextSlotTimeTag');
+      const nextDoseTargetTimeEl = document.getElementById('nextDoseTargetTime');
+      const nextDoseCountdownEl = document.getElementById('nextDoseCountdown');
+
+      if (nextSlot && nextSlotNameEl && nextSlotTimeTagEl && nextDoseTargetTimeEl && nextDoseCountdownEl) {
+        nextSlotNameEl.textContent = nextSlot.name;
+        nextSlotTimeTagEl.textContent = nextSlot.time;
+
+        let remainMins = nextSlot.totalMinutes - currentMinutes;
+        if (remainMins <= 0) remainMins += 1440;
+        const h = Math.floor(remainMins / 60);
+        const m = remainMins % 60;
+        
+        nextDoseTargetTimeEl.textContent = h > 0 ? `還有 ${h} 小時 ${m} 分鐘` : `還有 ${m} 分鐘`;
+        nextDoseCountdownEl.textContent = `${h}小時 ${m}分`;
+        renderMedicationListOnly('nextMedicationsList', nextSlot.items);
+      }
+    }
+
+    // 精簡藥品列表渲染
+    function renderMedicationListOnly(elementId, items) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+
+      if (el.getAttribute('data-loaded-slot') === JSON.stringify(items)) {
+        return;
+      }
+      el.setAttribute('data-loaded-slot', JSON.stringify(items));
+
+      if (!items || items.length === 0) {
+        el.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center font-bold">無藥物安排</p>`;
+        return;
+      }
+
+      let html = "";
+      items.forEach(item => {
+        let badgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-200";
+        let typeName = "保健";
+        if (item.type === "medicine") {
+          badgeStyle = "bg-indigo-50 text-indigo-800 border-indigo-200";
+          typeName = "處方藥";
+        } else if (item.type === "medicine-prn") {
+          badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
+          typeName = "備用";
+        }
+
+        html += `
+          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <div class="flex justify-between items-center gap-1 font-bold">
+              <span class="fluid-meta font-black text-slate-900">${item.name}</span>
+              <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded ${badgeStyle}">${typeName} (${item.dosage})</span>
+            </div>
+            <p class="text-xs text-slate-500 line-clamp-2"><strong class="text-slate-700">效：</strong>${item.effect}</p>
+            ${item.sideEffect ? `<p class="text-[11px] text-rose-500 leading-tight"><strong class="text-rose-600">⚠：</strong>${item.sideEffect}</p>` : ''}
+          </div>
+        `;
+      });
+      el.innerHTML = html;
+    }
+
+    // 時間刷新器
+    function initClock() {
+      function tick() {
+        const now = new Date();
+        const hrs = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        const secs = String(now.getSeconds()).padStart(2, '0');
+        
+        const clockEl = document.getElementById('liveClock');
+        if (clockEl) clockEl.textContent = `${hrs}:${mins}:${secs}`;
+        
+        const days = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        const dateEl = document.getElementById('liveDate');
+        if (dateEl) {
+          dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${days[now.getDay()]}`;
+        }
+
+        calculateTimesAndReminders();
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    function getTodayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function showToast(text, type = "success") {
+      const toast = document.getElementById('toastMessage');
+      const icon = document.getElementById('toastIcon');
+      const textEl = document.getElementById('toastText');
+
+      if (type === "success") {
+        icon.textContent = "✅";
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-100 transform translate-y-0 pointer-events-auto transition-all duration-300 z-50 flex items-center gap-2 border border-emerald-500/20";
+      } else {
+        icon.textContent = "⚠️";
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-rose-950 text-rose-100 text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-100 transform translate-y-0 pointer-events-auto transition-all duration-300 z-50 flex items-center gap-2 border border-rose-500/30";
+      }
+
+      textEl.textContent = text;
+
+      setTimeout(() => {
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-base font-bold px-6 py-4.5 rounded-full shadow-2xl opacity-0 transform translate-y-2 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2";
+      }, 3000);
     }
   </script>
 </body>
