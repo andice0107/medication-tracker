@@ -35,11 +35,11 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
-      /* 液態無障礙縮放字體 */
-      --fluid-title: clamp(1.1rem, 3.5vw, 1.8rem);
-      --fluid-subtitle: clamp(1rem, 2.5vw, 1.4rem);
-      --fluid-body: clamp(1.05rem, 2.2vw, 1.35rem);
-      --fluid-meta: clamp(0.95rem, 2vw, 1.15rem);
+      /* 液態無障礙縮放字體：全面針對老花眼/視力友善化，字體顯著放大 */
+      --fluid-title: clamp(1.4rem, 4.5vw, 2.2rem);
+      --fluid-subtitle: clamp(1.2rem, 3.5vw, 1.7rem);
+      --fluid-body: clamp(1.15rem, 2.6vw, 1.45rem);
+      --fluid-meta: clamp(1.05rem, 2.2vw, 1.25rem);
     }
 
     body {
@@ -75,43 +75,40 @@
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
-  <!-- 頂部高精簡滿版導航欄 (面積精準縮減 1/2，最大化釋放下方內容空間) -->
-  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full py-1.5 sm:py-2">
+  <!-- 頂部高精簡滿版導航欄 (面積精準縮減 1/2，最大化釋放下方內容空間，大小保持輕巧，不阻擋下方主視窗) -->
+  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full py-1 sm:py-1.5">
     <div class="w-full px-3 sm:px-4 flex flex-row justify-between items-center gap-2">
       
-      <!-- 標題圖示區 (比例調小 50%) -->
-      <div class="flex items-center gap-2">
-        <div class="bg-emerald-500 p-1.5 rounded-xl shadow-inner">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- 標題圖示區 (比例調小 50%，保持超高精簡) -->
+      <div class="flex items-center gap-1.5">
+        <div class="bg-emerald-500 p-1 rounded-xl shadow-inner">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
         </div>
         <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-sm sm:text-base font-black tracking-wide text-white leading-none">頤寧個人用藥</h1>
-            <span id="cloudStatusBadge" class="text-[9px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1 rounded font-bold">載入中</span>
+          <div class="flex items-center gap-1">
+            <h1 class="text-xs sm:text-sm font-black tracking-wide text-white leading-none">頤寧個人用藥</h1>
+            <span id="cloudStatusBadge" class="text-[8px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1 rounded font-bold leading-none">載入中</span>
           </div>
-          <p class="text-[9px] text-slate-400 mt-0.5 leading-none">雲端智能同步面板</p>
         </div>
       </div>
       
-      <!-- 當前使用者藥盒標籤 (緊湊排列) -->
-      <div class="bg-brand-700/80 px-2 py-0.5 rounded-xl border border-white/10 flex flex-col items-end">
-        <div class="flex items-center gap-1">
-          <span class="text-xs sm:text-sm text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
-          <span class="text-[9px] text-slate-300">的雲端藥盒</span>
-        </div>
+      <!-- 當前使用者藥盒標籤 (高精簡) -->
+      <div class="bg-brand-700/80 px-2 py-0.5 rounded-lg border border-white/10 flex flex-row items-center gap-1">
+        <span class="text-xs text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
+        <span class="text-[9px] text-slate-300">的雲端藥盒</span>
       </div>
 
-      <!-- 頂部導航按鈕列 (精緻緊湊排版，高度縮減，字體隨比例縮小) -->
-      <nav class="bg-brand-700 p-0.5 rounded-xl flex gap-0.5 border border-brand-600">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all bg-emerald-500 text-white shadow-md">
+      <!-- 頂部導航按鈕列 (精緻緊湊，不遮擋下方內容) -->
+      <nav class="bg-brand-700 p-0.5 rounded-lg flex gap-0.5 border border-brand-600">
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm">
           📅 一日流程
         </button>
-        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300 hover:text-white">
           🗓️ 一週打卡
         </button>
-        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg font-black text-xs sm:text-sm transition-all text-slate-300 hover:text-white">
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300 hover:text-white">
           ⚙️ 藥盒編輯規劃
         </button>
       </nav>
@@ -140,24 +137,24 @@
         </div>
       </div>
 
-      <!-- 核心監控三部曲面板 (當前、前一階段、後一階段，無任何高度截斷阻擋，完美展開全部藥品) -->
+      <!-- 核心監控三部曲面板 (當前、前一階段、後一階段，無任何高度截斷阻擋，完美展開全部藥品，字體放大處理) -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
         
         <!-- 前一階段用藥 -->
         <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
-              <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2 font-bold">
+              <h3 class="fluid-subtitle text-slate-600 flex items-center gap-2 font-black">
                 <span>⏮️ 前一階段用藥</span>
               </h3>
-              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
+              <span class="fluid-meta font-black text-slate-600 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
             </div>
-            <div class="text-slate-700 space-y-1.5 mb-3 font-bold">
-              <div class="fluid-meta text-brand-700">時段：<span id="prevSlotName" class="font-black">--</span></div>
+            <div class="text-slate-800 space-y-1.5 mb-3 font-bold">
+              <div class="fluid-subtitle text-brand-700">時段：<span id="prevSlotName" class="font-black">--</span></div>
               <div class="fluid-meta text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-black" id="prevDoseElapsed">已過去：--</div>
             </div>
-            <!-- 所有藥物與保健食品 100% 完全顯示，杜絕被 max-h 與溢出隱藏所遮蔽的風險 -->
-            <div id="prevMedicationsList" class="space-y-2 pr-1"></div>
+            <!-- 所有藥物與保健食品 100% 完全顯示 -->
+            <div id="prevMedicationsList" class="space-y-3 pr-1"></div>
           </div>
         </div>
 
@@ -168,17 +165,17 @@
           </div>
           <div>
             <div class="flex justify-between items-center border-b border-emerald-100 pb-3 mb-4">
-              <h3 class="fluid-title text-slate-900 flex items-center gap-2 font-bold">
+              <h3 class="fluid-title text-slate-950 flex items-center gap-2 font-black">
                 <span class="w-3.5 h-3.5 bg-rose-500 rounded-full animate-pulse"></span>
                 目前時段應服
               </h3>
               <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 border border-rose-200 px-3.5 py-1.5 rounded-full" id="currentSlotTimeTag">--:--</span>
             </div>
-            <div class="text-slate-700 mb-4 bg-brand-50/50 p-3 rounded-2xl border border-brand-100/50 font-bold">
+            <div class="text-slate-900 mb-4 bg-brand-50/50 p-3 rounded-2xl border border-brand-100/50 font-black">
               <span class="fluid-subtitle font-black text-brand-700">當下時段：<span id="currentSlotName">--</span></span>
             </div>
             <!-- 目前應服藥物 100% 高度完整展開 -->
-            <div id="currentMedicationsList" class="space-y-3 pr-1"></div>
+            <div id="currentMedicationsList" class="space-y-4 pr-1"></div>
           </div>
           <div class="pt-4 mt-4 border-t border-slate-100">
             <button type="button" onclick="window.markCurrentSlotAsTaken()" id="takeButton" class="w-full h-16 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3">
@@ -194,25 +191,63 @@
         <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 mb-3">
-              <h3 class="fluid-subtitle text-slate-500 flex items-center gap-2 font-bold">
+              <h3 class="fluid-subtitle text-slate-600 flex items-center gap-2 font-black">
                 <span>⏭️ 後一階段用藥</span>
               </h3>
-              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
+              <span class="fluid-meta font-black text-slate-600 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
             </div>
-            <div class="text-slate-700 space-y-1.5 mb-3 font-bold">
-              <div class="fluid-meta text-brand-700">時段：<span id="nextSlotName" class="font-black">--</span></div>
+            <div class="text-slate-800 space-y-1.5 mb-3 font-bold">
+              <div class="fluid-subtitle text-brand-700">時段：<span id="nextSlotName" class="font-black">--</span></div>
               <div class="fluid-meta text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
             </div>
-            <!-- 後續所有藥包安排 100% 完整顯示，完美預防漏藥 -->
-            <div id="nextMedicationsList" class="space-y-2 pr-1"></div>
+            <!-- 後續所有藥包安排 100% 完整顯示 -->
+            <div id="nextMedicationsList" class="space-y-3 pr-1"></div>
           </div>
         </div>
       </section>
 
       <!-- 全日服藥安排大綱 -->
       <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3 w-full">
-        <h3 class="fluid-subtitle text-slate-800 border-b border-slate-100 pb-2 font-bold">📋 全日服藥安排大綱</h3>
+        <h3 class="fluid-subtitle text-slate-900 border-b border-slate-200 pb-2 font-black">📋 全日服藥安排大綱</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="dailyOverviewContainer"></div>
+      </div>
+
+      <!-- ⚠️ 重要用藥與飲食安全提醒 (老花眼友善特大字體與高對比排版，常駐於主視圖) -->
+      <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-6 shadow-md space-y-4 w-full">
+        <h3 class="fluid-title text-amber-950 flex items-center gap-2 font-black">
+          <span>⚠️ 重要用藥與飲食安全提醒</span>
+        </h3>
+        <div class="space-y-4 text-slate-900 font-bold fluid-body">
+          <div class="p-3 bg-white rounded-xl border border-amber-200">
+            <h4 class="text-amber-900 font-extrabold fluid-subtitle">1. 妥寧（血脂藥）與睡前服用的科學依據：</h4>
+            <p class="mt-1 leading-relaxed">
+              <span class="text-rose-600 font-black">【避開交互作用】</span>：將鈣片移至睡前，能與早上的「魚油」達到完美的時段區隔，徹底避免魚油脂肪酸與鈣離子在高濃度下產生皂化反應而降低吸收率的問題。<br>
+              <span class="text-emerald-700 font-black">【符合生理時鐘】</span>：人體合成膽固醇的高峰期主要在半夜，睡前服用妥寧能達到極佳的抑制效果，同時簡化日間用藥流程。
+            </p>
+          </div>
+
+          <div class="p-3 bg-white rounded-xl border border-amber-200">
+            <h4 class="text-amber-900 font-extrabold fluid-subtitle">2. 高血壓藥物與飲食禁忌：</h4>
+            <p class="mt-1 leading-relaxed">
+              服用高血壓藥物期間，<span class="text-rose-600 font-black underline">絕對要避免食用「葡萄柚」或「香柚」</span>。柚類成分會抑制小腸及肝臟中的代謝酵素 (CYP3A4)，導致血壓藥在血中濃度異常升高，引發低血壓、心跳過快等危險。<br>
+              若您的血壓藥包含「血管收縮素轉化酶抑制劑」或「保鉀型利尿劑」，請<span class="text-rose-600 font-black underline">避免使用低鈉鹽</span>（低鈉鹽常以氯化鉀代替氯化鈉），以免體內鉀離子過高，引發高血鉀症及心律不整。
+            </p>
+          </div>
+
+          <div class="p-3 bg-white rounded-xl border border-amber-200">
+            <h4 class="text-amber-900 font-extrabold fluid-subtitle">3. 骨科藥物的使用與交互作用：</h4>
+            <p class="mt-1 leading-relaxed">
+              消炎止痛藥與肌肉鬆弛劑皆屬於<span class="text-indigo-700 font-black">「症狀緩解藥物」</span>，未感疼痛時不需服用。<br>
+              服用骨科藥物期間<span class="text-rose-600 font-black underline">請勿飲酒</span>，酒精會加重消炎藥對胃黏膜的傷害，且與肌肉鬆弛劑併用會產生中樞神經協同抑制作用，導致過度嗜睡、呼吸抑制或步態不穩等危險。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💡 醫療專業免責聲明 (老花眼視力友善) -->
+      <div class="bg-slate-100 border-2 border-slate-300 rounded-2xl p-5 font-bold text-slate-800 fluid-body leading-relaxed">
+        <h4 class="fluid-subtitle text-slate-950 font-black mb-1">💡 醫療專業免責聲明：</h4>
+        本規劃表係依據各藥物與保健食品之普遍藥理學特性所擬定之優化時間排程。由於個人體質與具體處方品項（如高血壓藥之具體成分）有所差異，<span class="text-rose-600 font-black">實際服用前，請務必先遵循您處方箋上的醫囑指示</span>，或於回診時將此規劃表提供給您的主治醫師或社區藥局藥師進行最終確認，以確保臨床用藥之最高安全。
       </div>
     </div>
 
@@ -221,7 +256,7 @@
       <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-4 w-full font-bold">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h2 class="fluid-title text-slate-800">🗓️ 一週服藥進度打卡卡片</h2>
+            <h2 class="fluid-title text-slate-950">🗓️ 一週服藥進度打卡卡片</h2>
             <p class="text-xs text-slate-500 mt-1">點擊下方時段圓點可補登或更正用藥狀態</p>
           </div>
           <button id="resetWeeklyLogBtn" type="button" onclick="window.requestResetWeeklyLogs()" class="text-sm font-black text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2.5 rounded-xl border border-rose-200 transition-all">
@@ -236,7 +271,7 @@
     <div id="editView" class="hidden bg-white rounded-3xl p-5 shadow-md border border-slate-100 space-y-6 w-full animate-fade">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3 font-bold">
         <div>
-          <h2 class="fluid-title text-slate-800 font-bold" id="editBoxTitle">⚙️ 正在編輯您的用藥規劃</h2>
+          <h2 class="fluid-title text-slate-950 font-bold" id="editBoxTitle">⚙️ 正在編輯您的用藥規劃</h2>
           <p class="text-xs text-slate-500 mt-1">修改完成後請記得點擊最下方的「💾 儲存修改並套用」。</p>
         </div>
         <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-5 py-3 rounded-2xl border border-slate-300 text-base shadow-sm transition-all flex items-center gap-1.5">
@@ -252,15 +287,15 @@
         </div>
       </div>
 
-      <!-- 檔案匯出匯入 -->
-      <div class="bg-slate-50 p-4 rounded-2xl flex justify-between items-center gap-3">
-        <span class="text-xs text-slate-500 font-bold">備份 / 範本檔案管理:</span>
-        <div class="flex gap-2 font-bold">
-          <button type="button" onclick="window.exportConfig()" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl transition-all">
+      <!-- 檔案匯出匯入 (已完美補回與優化備份機制) -->
+      <div class="bg-slate-100 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-3">
+        <span class="fluid-body font-black text-brand-800">📦 備份設定檔案管理:</span>
+        <div class="flex gap-2 font-bold w-full sm:w-auto">
+          <button type="button" onclick="window.exportConfig()" class="flex-1 sm:flex-initial h-12 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm px-5 rounded-xl transition-all">
             📥 匯出當前配置 (.json)
           </button>
-          <label for="importFile" class="h-10 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-xs px-4 rounded-xl flex items-center justify-center cursor-pointer transition-all">
-            📤 匯入範本更新
+          <label for="importFile" class="flex-1 sm:flex-initial h-12 bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-sm px-5 rounded-xl flex items-center justify-center cursor-pointer transition-all">
+            📤 載入備份規劃
           </label>
           <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
         </div>
@@ -318,13 +353,13 @@
   </div>
 
   <script>
-    // 預置使用者戴漢彬先生提供的完整規劃資料 (預設基本用藥規劃數據)
+    // 預設基本用藥規劃數據 (戴漢彬先生 100% 完整規劃，無任何缺漏)
     const defaultSchedule = [
       {
         id: "slot-3vbx7brcf",
         name: "早餐後",
         time: "08:30",
-        description: "隨餐或飯後30分鐘內",
+        description: "隨餐或飯後30分鐘內。此時段集中處理白天所需的營養素，工作前服用即可完成，避免干擾日間工作。",
         items: [
           { id: "item-mdnlup4fu", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
           { id: "item-48gr89pa4", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
@@ -335,7 +370,7 @@
         id: "slot-vyiblho7v",
         name: "午餐後",
         time: "12:30",
-        description: "隨餐或飯後30分鐘內",
+        description: "隨餐或飯後30分鐘內。非類固醇消炎止痛藥 (NSAIDs) 對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。",
         items: [
           { id: "item-7jwzzm3xk", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。", sideEffect: "對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。" },
           { id: "item-9r92p1jvg", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，改善緊繃感。僅在足跟痛時服用。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，開車或機械操作請留意。" }
@@ -345,7 +380,7 @@
         id: "slot-j9brkk69g",
         name: "晚餐後",
         time: "18:30",
-        description: "隨餐或飯後30分鐘內",
+        description: "隨餐或飯後30分鐘內。高血壓藥請依照醫囑固定於晚餐後服用，以維持夜間及清晨的血壓穩定。",
         items: [
           { id: "item-5bnp0b01h", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。以維持夜間及清晨的血壓穩定。", sideEffect: "服用期間絕對禁止食用「葡萄柚」與「柚子」！避免使用高鉀低鈉鹽。" },
           { id: "item-3rxnio9n5", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "水飛薊素，隨晚餐後服用能大幅提升吸收率。", sideEffect: "脂溶性成分，晚餐隨餐吸收最好。" }
@@ -355,7 +390,7 @@
         id: "slot-kj98ovr7n",
         name: "夜間睡前",
         time: "22:00",
-        description: "就寢前30分鐘",
+        description: "就寢前30分鐘。妥寧 (Atorvastatin) 不受空腹限制，精準抑制深夜膽固醇合成。鈣片利用夜間身體靜止吸收、助眠。",
         items: [
           { id: "item-sjyxxhke0", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)，不受空腹限制，精準抑制深夜膽固醇合成。", sideEffect: "固定於睡前服用效果佳，且避開忙碌時段防漏藥。" },
           { id: "item-vew17xlbo", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油完美間隔12小時，完全避免與魚油中的脂肪酸產生皂化反應，吸收率極大化。" }
@@ -365,7 +400,7 @@
         id: "slot-n64cn82j1",
         name: "骨科備用藥",
         time: "隨時",
-        description: "若夜間因足跟骨刺疼痛發作時",
+        description: "若夜間因足跟骨刺疼痛發作時服用。消炎止痛藥切勿完全空腹服用。",
         items: [
           { id: "item-e804qynmd", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。" },
           { id: "item-zcg5bvu9x", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用有助於改善因痛失眠。", sideEffect: "避免因痛失眠。" }
@@ -426,8 +461,9 @@
     const appId = 'yining-med-tracker';
     let currentFirestoreUnsubscribe = null;
     let editorSchedule = []; // 編輯專用記憶暫存
+    window.currentView = 'day';
 
-    // Firebase 真實配置連線
+    // Firebase 真實配置連線 (已接入使用者提供之安全金鑰)
     let firebaseConfig = {
       apiKey: "AIzaSyC5qwepU0PnotyRXzD4S0iTBZhHSiW-pus",
       authDomain: "yining-med-tracker.firebaseapp.com",
@@ -521,7 +557,6 @@
       }
 
       if (!isCacheValid) {
-        // 使用戴漢彬先生的預置資料
         window.appState.username = "戴漢彬";
         window.appState.schedule = JSON.parse(JSON.stringify(defaultSchedule));
         window.appState.weeklyLogs = {
@@ -653,11 +688,9 @@
     function renderApp() {
       const activeName = window.appState.username || "戴漢彬";
       document.getElementById('headerUserDisplay').textContent = activeName;
-
-      // 僅在編輯規劃畫面未顯示時，才去重置文字欄位值，防止使用者正在打字時被覆蓋
-      const editView = document.getElementById('editView');
+      
       const editUsernameInput = document.getElementById('editUsername');
-      if (editView && editView.classList.contains('hidden') && editUsernameInput) {
+      if (editUsernameInput && window.currentView !== 'edit') {
         editUsernameInput.value = activeName;
       }
 
@@ -676,28 +709,28 @@
         const isTaken = window.appState.takenLogs[todayStr]?.[slot.id];
         
         html += `
-          <div class="p-4 rounded-2xl border-2 ${isTaken ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-2">
+          <div class="p-5 rounded-3xl border-2 ${isTaken ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-3 font-bold">
             <div class="flex justify-between items-start">
               <div>
-                <span class="fluid-meta font-black text-slate-800 font-bold">${slot.name}</span>
-                <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded ml-1 font-bold">${slot.time}</span>
+                <span class="fluid-subtitle font-black text-slate-950 font-bold">${slot.name}</span>
+                <span class="text-sm bg-slate-200 text-slate-700 px-3 py-1 rounded-xl ml-1 font-bold">${slot.time}</span>
               </div>
               <div>
                 ${isTaken 
-                  ? `<span class="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-bold">✓已服 ${isTaken}</span>`
-                  : `<button type="button" onclick="window.markCurrentSlotAsTaken('${slot.id}')" class="text-xs font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded-lg border border-brand-200 font-bold">打卡</button>`
+                  ? `<span class="text-sm font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl font-bold">✓已服 ${isTaken}</span>`
+                  : `<button type="button" onclick="window.markCurrentSlotAsTaken('${slot.id}')" class="text-sm font-black text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1 rounded-xl border border-brand-200 font-bold">打卡</button>`
                 }
               </div>
             </div>
-            <div class="text-xs text-slate-500 font-bold">${slot.description || '無詳細說明'}</div>
-            <div class="border-t border-dashed border-slate-200 pt-1.5 space-y-1">
+            <div class="text-sm text-slate-600 font-bold leading-relaxed">${slot.description || '無詳細說明'}</div>
+            <div class="border-t border-dashed border-slate-200 pt-2 space-y-2">
               ${(slot.items || []).map(item => `
-                <div class="text-xs text-slate-700 flex justify-between font-bold">
+                <div class="text-sm text-slate-900 flex justify-between font-extrabold">
                   <span>• <strong>${item.name}</strong></span>
-                  <span class="text-[10px] text-slate-400 font-bold">x${item.dosage}</span>
+                  <span class="text-xs text-slate-500 font-black">x ${item.dosage}</span>
                 </div>
               `).join('')}
-              ${(!slot.items || slot.items.length === 0) ? '<div class="text-xs text-slate-400 text-center font-bold">無安排藥品</div>' : ''}
+              ${(!slot.items || slot.items.length === 0) ? '<div class="text-sm text-slate-400 text-center font-bold">無安排藥品</div>' : ''}
             </div>
           </div>
         `;
@@ -798,6 +831,7 @@
     }
 
     function switchViewDirectly(viewName) {
+      window.currentView = viewName;
       const dayView = document.getElementById('dayView');
       const weekView = document.getElementById('weekView');
       const editView = document.getElementById('editView');
@@ -810,8 +844,8 @@
       if (weekView) weekView.classList.add('hidden');
       if (editView) editView.classList.add('hidden');
 
-      const normalClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all text-slate-300 hover:text-white font-bold";
-      const activeClass = "flex-1 lg:flex-initial px-6 py-3 rounded-xl font-black text-base transition-all shadow-md bg-emerald-500 text-white font-bold";
+      const normalClass = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300 hover:text-white";
+      const activeClass = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all shadow-sm bg-emerald-500 text-white";
       
       if (btnDay) btnDay.className = normalClass;
       if (btnWeek) btnWeek.className = normalClass;
@@ -820,14 +854,15 @@
       if (viewName === 'day') {
         if (dayView) dayView.classList.remove('hidden');
         if (btnDay) btnDay.className = activeClass;
+        renderApp();
       } else if (viewName === 'week') {
         if (weekView) weekView.classList.remove('hidden');
         if (btnWeek) btnWeek.className = activeClass;
+        renderApp();
       } else if (viewName === 'edit') {
         if (editView) editView.classList.remove('hidden');
         if (btnEdit) btnEdit.className = activeClass;
-        // 切換進入編輯規劃時，顯式載入一次用戶名
-        document.getElementById('editUsername').value = window.appState.username || "戴漢彬";
+        document.getElementById('editUsername').value = window.appState.username;
         renderEditor();
       }
     }
@@ -846,67 +881,69 @@
         if (!slot.items) slot.items = [];
 
         html += `
-          <div class="editor-slot bg-slate-50 border border-slate-200 rounded-2xl p-4 relative space-y-3 pointer-events-auto z-10" data-slot-id="${slot.id || ''}" data-slot-index="${sIdx}">
-            <button type="button" onclick="window.removeEditorSlotInDom(${sIdx})" class="absolute top-3 right-3 text-rose-500 hover:text-rose-700 font-bold text-xs bg-white border border-rose-100 px-2.5 py-1 rounded-lg">
+          <div class="editor-slot bg-slate-50 border-2 border-slate-200 rounded-3xl p-5 relative space-y-4 pointer-events-auto z-10" data-slot-id="${slot.id}" data-slot-index="${sIdx}">
+            <button type="button" onclick="window.removeEditorSlotInDom(${sIdx})" class="absolute top-3 right-3 text-rose-600 hover:text-rose-800 font-extrabold text-sm bg-white border border-rose-200 px-3 py-1.5 rounded-xl shadow-sm">
               ✕ 刪除時段
             </button>
 
-            <div class="space-y-2.5 pt-4 font-bold">
+            <div class="space-y-3 pt-5 font-bold fluid-body">
               <div>
-                <label class="block text-xs font-black text-slate-400 mb-0.5">時段名稱 (例: 早餐後)</label>
-                <input type="text" value="${slot.name}" class="slot-input-name w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <label class="block text-sm font-black text-slate-600 mb-1">時段名稱 (例: 早餐後)</label>
+                <input type="text" value="${slot.name}" class="slot-input-name w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-xs font-black text-slate-400 mb-0.5">時間 (例: 08:30)</label>
-                  <input type="text" value="${slot.time}" class="slot-input-time w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <label class="block text-sm font-black text-slate-600 mb-1">時間 (例: 08:30)</label>
+                  <input type="text" value="${slot.time}" class="slot-input-time w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
-                  <label class="block text-xs font-black text-slate-400 mb-0.5">時段備註</label>
-                  <input type="text" value="${slot.description || ''}" class="slot-input-desc w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <label class="block text-sm font-black text-slate-600 mb-1">時段備註</label>
+                  <input type="text" value="${slot.description || ''}" class="slot-input-desc w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
               </div>
             </div>
 
-            <div class="bg-white p-3 rounded-xl border border-slate-100 space-y-2">
-              <div class="flex justify-between items-center">
-                <h4 class="text-xs font-black text-slate-600 font-bold">本時段用藥細項</h4>
-                <button type="button" onclick="window.addEditorItemInDom(${sIdx})" class="text-[10px] bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded-md font-black transition-all">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div class="flex justify-between items-center border-b pb-2">
+                <h4 class="fluid-subtitle font-black text-slate-800 font-bold">本時段用藥與保健細項</h4>
+                <button type="button" onclick="window.addEditorItemInDom(${sIdx})" class="text-sm bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl font-black transition-all shadow-sm">
                   ＋ 新增藥品/食品
                 </button>
               </div>
 
-              <div class="editor-items-list space-y-2">
+              <div class="editor-items-list space-y-3">
                 ${slot.items.map((item, iIdx) => `
-                  <div class="editor-item-card bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2 relative" data-item-id="${item.id || ''}" data-item-index="${iIdx}">
-                    <button type="button" onclick="window.removeEditorItemInDom(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black text-xs">
-                      ✕
+                  <div class="editor-item-card bg-slate-50 p-4 rounded-xl border-2 border-slate-200 space-y-3 relative" data-item-id="${item.id}" data-item-index="${iIdx}">
+                    <button type="button" onclick="window.removeEditorItemInDom(${sIdx}, ${iIdx})" class="absolute top-2 right-2 text-rose-600 hover:text-rose-800 font-black text-sm">
+                      ✕ 移除
                     </button>
-                    <div class="font-bold">
-                      <label class="block text-[10px] font-bold text-slate-400">藥名/品項名稱</label>
-                      <input type="text" value="${item.name}" class="item-input-name w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                      <div class="font-bold">
-                        <label class="block text-[10px] font-bold text-slate-400">類型</label>
-                        <select class="item-input-type w-full h-8 bg-white border border-slate-200 rounded-md px-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                          <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
-                          <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
-                          <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
-                        </select>
+                    <div class="font-bold fluid-body space-y-3">
+                      <div>
+                        <label class="block text-xs font-bold text-slate-500">藥名/品項名稱</label>
+                        <input type="text" value="${item.name}" class="item-input-name w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                       </div>
-                      <div class="font-bold">
-                        <label class="block text-[10px] font-bold text-slate-400">劑量</label>
-                        <input type="text" value="${item.dosage || ''}" class="item-input-dosage w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="block text-xs font-bold text-slate-500">類型</label>
+                          <select class="item-input-type w-full h-10 bg-white border border-slate-200 rounded-xl px-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="medicine" ${item.type === 'medicine' ? 'selected' : ''}>處方藥</option>
+                            <option value="medicine-prn" ${item.type === 'medicine-prn' ? 'selected' : ''}>處方藥(備用)</option>
+                            <option value="supplement" ${item.type === 'supplement' ? 'selected' : ''}>保健食品</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-500">劑量</label>
+                          <input type="text" value="${item.dosage || ''}" class="item-input-dosage w-full h-10 bg-white border border-slate-200 rounded-xl px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
                       </div>
-                    </div>
-                    <div class="font-bold">
-                      <label class="block text-[10px] font-bold text-slate-400">主要效用</label>
-                      <input type="text" value="${item.effect || ''}" class="item-input-effect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div class="font-bold">
-                      <label class="block text-[10px] font-bold text-slate-400">注意事項/副作用</label>
-                      <input type="text" value="${item.sideEffect || ''}" class="item-input-sideeffect w-full h-8 bg-white border border-slate-200 rounded-md px-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      <div>
+                        <label class="block text-xs font-bold text-slate-500">主要效用</label>
+                        <input type="text" value="${item.effect || ''}" class="item-input-effect w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      </div>
+                      <div>
+                        <label class="block text-xs font-bold text-slate-500">注意事項/副作用</label>
+                        <input type="text" value="${item.sideEffect || ''}" class="item-input-sideeffect w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                      </div>
                     </div>
                   </div>
                 `).join('')}
@@ -920,7 +957,7 @@
       container.innerHTML = html;
     }
 
-    // 將所有欄位變更從 DOM 自動讀取與套用，並精準保持 Slot ID 與 Item ID 不遺失
+    // 將所有欄位變更從 DOM 自動讀取與套用，防止資料錯亂，保持 ID 一致性
     window.readEditorConfigFromDom = function() {
       const schedule = [];
       const slotElements = document.querySelectorAll('.editor-slot');
@@ -1022,10 +1059,7 @@
       window.appState.schedule = schedule;
       
       saveCloudState();
-      renderApp();
-      calculateTimesAndReminders();
       showToast("💾 用藥規劃已儲存更新！");
-      
       switchViewDirectly('day');
     };
 
@@ -1041,7 +1075,7 @@
       }
     };
 
-    // 備份匯出功能
+    // 備份導出 (.json)
     window.exportConfig = function() {
       window.appState.schedule = window.readEditorConfigFromDom();
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
@@ -1054,7 +1088,7 @@
       showToast("📥 備份設定檔案已下載！");
     };
 
-    // 備份載入功能 (載入後會自動更新輸入框的名字)
+    // 載入備份檔案 (.json)
     window.importConfig = function(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1068,7 +1102,6 @@
             saveOfflineState();
             saveCloudState();
             
-            // 更新 UI 上正在編輯的使用者姓名
             const inputName = document.getElementById('editUsername');
             if (inputName && imported.username) {
               inputName.value = imported.username;
@@ -1076,7 +1109,7 @@
             
             renderEditorSlots();
             renderApp();
-            showToast("📤 備份載入成功！請按最下方儲存修改。");
+            showToast("📤 備份規劃已導入！請點擊最下方套用。");
           } else {
             showToast("⚠️ 檔案格式不符合規範！", "warning");
           }
@@ -1210,7 +1243,7 @@
       }
     }
 
-    // 精簡藥品列表渲染
+    // 精簡藥品列表渲染 (視力/老花眼友善高對比字體放大排版)
     function renderMedicationListOnly(elementId, items) {
       const el = document.getElementById(elementId);
       if (!el) return;
@@ -1221,30 +1254,30 @@
       el.setAttribute('data-loaded-slot', JSON.stringify(items));
 
       if (!items || items.length === 0) {
-        el.innerHTML = `<p class="text-xs text-slate-400 py-2 text-center font-bold">無藥物安排</p>`;
+        el.innerHTML = `<p class="text-sm text-slate-400 py-3 text-center font-bold">無藥物安排</p>`;
         return;
       }
 
       let html = "";
       items.forEach(item => {
-        let badgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-200";
-        let typeName = "保健";
+        let badgeStyle = "bg-emerald-100 text-emerald-950 border-emerald-300";
+        let typeName = "保健食品";
         if (item.type === "medicine") {
-          badgeStyle = "bg-indigo-50 text-indigo-800 border-indigo-200";
+          badgeStyle = "bg-indigo-100 text-indigo-950 border-indigo-300";
           typeName = "處方藥";
         } else if (item.type === "medicine-prn") {
-          badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
-          typeName = "備用";
+          badgeStyle = "bg-amber-100 text-amber-950 border-amber-300";
+          typeName = "備用藥";
         }
 
         html += `
-          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-            <div class="flex justify-between items-center gap-1 font-bold">
-              <span class="fluid-meta font-black text-slate-900">${item.name}</span>
-              <span class="text-[10px] font-bold border px-1.5 py-0.5 rounded ${badgeStyle}">${typeName} (${item.dosage})</span>
+          <div class="bg-white p-4 rounded-2xl border-2 border-slate-300 shadow-sm space-y-2 text-slate-950 font-bold">
+            <div class="flex justify-between items-center gap-1">
+              <span class="fluid-subtitle font-black text-slate-950">${item.name}</span>
+              <span class="text-xs font-bold border-2 px-2 py-0.5 rounded-lg ${badgeStyle}">${typeName} (${item.dosage})</span>
             </div>
-            <p class="text-xs text-slate-500 line-clamp-2"><strong class="text-slate-700">效：</strong>${item.effect}</p>
-            ${item.sideEffect ? `<p class="text-[11px] text-rose-500 leading-tight"><strong class="text-rose-600">⚠：</strong>${item.sideEffect}</p>` : ''}
+            <p class="fluid-body text-slate-700 leading-relaxed"><strong class="text-slate-900 font-extrabold">效能：</strong>${item.effect}</p>
+            ${item.sideEffect ? `<p class="fluid-body text-rose-700 leading-relaxed bg-rose-50 p-2.5 rounded-xl border border-rose-200"><strong class="text-rose-900 font-black">⚠️ 警告/副作用：</strong>${item.sideEffect}</p>` : ''}
           </div>
         `;
       });
@@ -1268,7 +1301,10 @@
           dateEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${days[now.getDay()]}`;
         }
 
-        calculateTimesAndReminders();
+        // 僅在非編輯畫面時背景更新計時
+        if (window.currentView !== 'edit') {
+          calculateTimesAndReminders();
+        }
       }
       tick();
       setInterval(tick, 1000);
