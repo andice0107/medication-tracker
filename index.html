@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="頤寧用藥">
   <meta name="mobile-web-app-capable" content="yes">
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,13 +17,8 @@
         extend: {
           colors: {
             brand: {
-              50: '#f0f4f8',
-              100: '#d9e2ec',
-              200: '#bcccdc',
-              500: '#334e68',
-              600: '#243b53',
-              700: '#102a43',
-              800: '#0c1b2a',
+              50: '#f0f4f8', 100: '#d9e2ec', 200: '#bcccdc',
+              500: '#334e68', 600: '#243b53', 700: '#102a43', 800: '#0c1b2a',
             }
           }
         }
@@ -35,11 +29,13 @@
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
     
     :root {
-      /* 液態無障礙縮放字體：全面針對老花眼友善，字體大幅顯著放大 */
-      --fluid-title: clamp(1.5rem, 5vw, 2.5rem);
-      --fluid-subtitle: clamp(1.3rem, 4vw, 2rem);
-      --fluid-body: clamp(1.2rem, 3vw, 1.6rem); /* 放大內文尺寸 */
-      --fluid-meta: clamp(1.1rem, 2.5vw, 1.4rem);
+      /* 預設字體大小：老花眼友善的大尺寸基準 */
+      --fluid-title: clamp(1.4rem, 4.5vw, 2.2rem);
+      --fluid-subtitle: clamp(1.2rem, 3.5vw, 1.7rem);
+      --fluid-body: clamp(1.15rem, 2.6vw, 1.45rem);
+      --fluid-meta: clamp(1.05rem, 2.2vw, 1.25rem);
+      /* 內容區縮放倍率 */
+      --content-scale: 1.0;
     }
 
     body {
@@ -48,16 +44,21 @@
       font-size: var(--fluid-body);
     }
 
-    /* 確保輸入與選擇元素於點選時不失效 */
+    /* 縮放容器：只針對內容區進行動態放大 */
+    #zoomableArea {
+      transform: scale(var(--content-scale));
+      transform-origin: top center;
+      transition: transform 0.2s ease-out;
+      width: 100%;
+    }
+
     input, select, textarea, button {
       user-select: text !important;
       -webkit-user-select: text !important;
       pointer-events: auto !important;
     }
 
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { -webkit-tap-highlight-color: transparent; }
 
     .fluid-title { font-size: var(--fluid-title); font-weight: 900; }
     .fluid-subtitle { font-size: var(--fluid-subtitle); font-weight: 700; }
@@ -67,8 +68,8 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* 針對長段落文字增加行距，讓老花閱讀更輕鬆 */
-    .line-height-elder { line-height: 1.6; }
+    /* 確保縮放後高度能正確撐開容器 */
+    .zoom-wrapper { overflow: visible; width: 100%; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -77,8 +78,8 @@
 </head>
 <body class="text-slate-900 antialiased min-h-screen flex flex-col pb-safe w-full overflow-x-hidden">
 
-  <!-- 頂部高精簡導航欄 (不擋下方畫面) -->
-  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-40 w-full py-1 sm:py-1.5">
+  <!-- 頂部高精簡導航欄 (固定大小，不隨縮放按鈕變動) -->
+  <header class="bg-brand-800 text-white shadow-md sticky top-0 z-50 w-full py-1 sm:py-1.5 shrink-0">
     <div class="w-full px-3 sm:px-4 flex flex-row justify-between items-center gap-2">
       <div class="flex items-center gap-1.5">
         <div class="bg-emerald-500 p-1 rounded-xl shadow-inner shrink-0">
@@ -87,202 +88,207 @@
           </svg>
         </div>
         <h1 class="text-xs sm:text-sm font-black tracking-wide text-white leading-none">頤寧個人用藥</h1>
-        <span id="cloudStatusBadge" class="text-[8px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1 rounded font-bold leading-none">系統就緒</span>
+        <span id="cloudStatusBadge" class="text-[8px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1 rounded font-bold leading-none">載入中</span>
       </div>
       
-      <div class="bg-brand-700/80 px-2 py-0.5 rounded-lg border border-white/10 flex flex-row items-center gap-1">
+      <div class="bg-brand-700/80 px-2 py-0.5 rounded-lg border border-white/10 flex items-center gap-1">
         <span class="text-xs text-emerald-400 font-extrabold" id="headerUserDisplay">--</span>
         <span class="text-[9px] text-slate-300">藥盒</span>
       </div>
 
       <nav class="bg-brand-700 p-0.5 rounded-lg flex gap-0.5 border border-brand-600 shrink-0">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2 py-1 rounded font-black text-[10px] sm:text-xs transition-all bg-emerald-500 text-white">📅 一日</button>
-        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2 py-1 rounded font-black text-[10px] sm:text-xs transition-all text-slate-300">🗓️ 一週</button>
-        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2 py-1 rounded font-black text-[10px] sm:text-xs transition-all text-slate-300">⚙️ 編輯</button>
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white">📅 一日</button>
+        <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300">🗓️ 一週</button>
+        <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300">⚙️ 編輯</button>
       </nav>
     </div>
   </header>
 
-  <main class="flex-grow w-full px-3 py-4 space-y-4 max-w-full">
+  <!-- 內容區縮放包覆層 -->
+  <div class="zoom-wrapper flex-grow overflow-x-hidden overflow-y-auto">
+    <main id="zoomableArea" class="w-full px-3 py-4 space-y-5 max-w-full">
 
-    <div id="dayView" class="space-y-4 w-full">
-      <!-- 即時提示面板 -->
-      <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-2xl p-5 text-white shadow-md relative overflow-hidden w-full">
-        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10 relative">
+      <div id="dayView" class="space-y-5 w-full">
+        <!-- 即時狀態面板 -->
+        <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-2xl p-4 text-white shadow-md relative overflow-hidden w-full">
+          <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 z-10 relative">
+            <div>
+              <div class="text-3xl sm:text-5xl font-black tracking-tight" id="liveClock">00:00:00</div>
+              <div class="text-sm sm:text-base text-slate-300 mt-0.5 font-bold" id="liveDate">2026年5月27日 星期三</div>
+            </div>
+            <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-2">
+              <span class="text-sm sm:text-base text-slate-300 block font-bold">⏱️ 下一階段倒計時：</span>
+              <span class="text-2xl sm:text-4xl font-black text-amber-300 block mt-0.5" id="nextDoseCountdown">--小時--分</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 核心監控三部曲 (時段名稱已修正) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full">
+          <!-- 前一階段 -->
+          <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-3">
+                <h3 class="fluid-subtitle text-slate-600 font-black">⏮️ 前一階段用藥</h3>
+                <span class="fluid-meta font-black text-slate-600 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
+              </div>
+              <div class="text-slate-800 space-y-1.5 mb-4">
+                <div class="fluid-subtitle text-brand-700 font-black">時段：<span id="prevSlotName">--</span></div>
+                <div class="fluid-meta text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg inline-block font-black" id="prevDoseElapsed">已過去：--</div>
+              </div>
+              <div id="prevMedicationsList" class="space-y-4"></div>
+            </div>
+          </div>
+
+          <!-- 目前應服 (時段名稱已補註) -->
+          <div class="bg-white rounded-3xl p-6 border-4 border-emerald-500 shadow-xl flex flex-col justify-between transform lg:scale-105 z-10 relative">
+            <div class="absolute top-0 right-6 transform -translate-y-1/2">
+              <span class="bg-emerald-500 text-white text-base font-black px-6 py-2 rounded-full shadow-lg">當下進行中</span>
+            </div>
+            <div>
+              <div class="flex justify-between items-center border-b border-emerald-100 pb-4 mb-4">
+                <h3 class="fluid-title text-slate-950 flex items-center gap-2 font-black">
+                  <span class="w-3.5 h-3.5 bg-rose-500 rounded-full animate-pulse"></span>
+                  目前應服藥物
+                </h3>
+                <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 border-2 border-rose-200 px-4 py-2 rounded-full" id="currentSlotTimeTag">--:--</span>
+              </div>
+              <div class="text-slate-950 mb-4 bg-brand-50 p-4 rounded-2xl border-2 border-brand-100 font-black">
+                <span class="fluid-subtitle text-brand-800">當下時段：<span id="currentSlotName">--</span></span>
+              </div>
+              <div id="currentMedicationsList" class="space-y-5"></div>
+            </div>
+            <div class="pt-5 mt-5 border-t border-slate-100">
+              <button type="button" onclick="window.markCurrentSlotAsTaken()" id="takeButton" class="w-full h-20 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-2xl rounded-2xl shadow-xl transition-all flex items-center justify-center gap-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/>
+                </svg>
+                確認此時段已服藥
+              </button>
+            </div>
+          </div>
+
+          <!-- 後一階段 (時段名稱已修正) -->
+          <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-3">
+                <h3 class="fluid-subtitle text-slate-600 font-black">⏭️ 後一階段用藥</h3>
+                <span class="fluid-meta font-black text-slate-600 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
+              </div>
+              <div class="text-slate-800 space-y-1.5 mb-4 font-bold">
+                <div class="fluid-subtitle text-brand-700 font-black">時段：<span id="nextSlotName">--</span></div>
+                <div class="fluid-meta text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
+              </div>
+              <div id="nextMedicationsList" class="space-y-4"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 全日安排大綱 -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 w-full">
+          <h3 class="fluid-subtitle text-slate-900 border-b-2 border-slate-100 pb-3 font-black">📋 全日服藥安排大綱</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="dailyOverviewContainer"></div>
+        </div>
+
+        <!-- ⚠️ 重要用藥與飲食安全提醒 (老花眼友善特大字體，資料完整) -->
+        <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-7 shadow-lg space-y-6 w-full">
+          <h3 class="fluid-title text-amber-950 flex items-center gap-3 font-black">
+            <span>⚠️ 重要用藥與飲食安全提醒</span>
+          </h3>
+          <div class="space-y-5 text-slate-950 font-bold fluid-body leading-relaxed">
+            <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
+              <h4 class="text-amber-900 font-black fluid-subtitle mb-2">1. 妥寧（血脂藥）與睡前服用的科學依據：</h4>
+              <p>
+                <span class="text-rose-600 font-black">【避開交互作用】</span>：將鈣片移至睡前，能與早上的「魚油」達到完美的時段區隔，徹底避免魚油脂肪酸與鈣離子在高濃度下產生皂化反應而降低吸收率的問題。<br>
+                <span class="text-emerald-700 font-black">【符合生理時鐘】</span>：人體合成膽固醇的高峰期主要在半夜，睡前服用妥寧能達到極佳的抑制效果，同時簡化日間用藥流程。
+              </p>
+            </div>
+            <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
+              <h4 class="text-amber-900 font-black fluid-subtitle mb-2">2. 高血壓藥物與飲食禁忌：</h4>
+              <p>
+                服用高血壓藥物期間，<span class="text-rose-600 font-black underline italic">絕對要避免食用「葡萄柚」或「香柚」</span>。柚類成分會抑制小腸及肝臟中的代謝酵素 (CYP3A4)，導致血壓藥在血中濃度異常升高，引發低血壓、心跳過快等危險。若您的血壓藥包含「血管收縮素轉化酶抑制劑」或「保鉀型利尿劑」，請<span class="text-rose-600 font-black underline">避免使用低鈉鹽</span>（低鈉鹽常以氯化鉀代替氯化鈉），以免體內鉀離子過高，引發高血鉀症及心律不整。
+              </p>
+            </div>
+            <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
+              <h4 class="text-amber-900 font-black fluid-subtitle mb-2">3. 骨科藥物的使用與交互作用：</h4>
+              <p>
+                消炎止痛藥與肌肉鬆弛劑皆屬於「症狀緩解藥物」，未感疼痛時不需服用。服用期間<span class="text-rose-600 font-black underline">請勿飲酒</span>，酒精會加重消炎藥對胃黏膜的傷害，且與肌肉鬆弛劑併用會產生中樞神經協同抑制作用，導致過度嗜睡、呼吸抑制或步態不穩等危險。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-100 border-2 border-slate-300 rounded-3xl p-6 font-bold text-slate-800 fluid-body leading-relaxed">
+          <h4 class="fluid-subtitle text-slate-950 font-black mb-2">💡 醫療專業免責聲明：</h4>
+          本規劃表係依據各藥物與保健食品之普遍藥理學特性所擬定之優化時間排程。由於個人體質差異，<span class="text-rose-600 font-black">實際服用前請務必先遵循您的醫囑指示</span>，回診時提供給主治醫師進行最終確認。
+        </div>
+      </div>
+
+      <div id="weekView" class="hidden space-y-5 w-full">
+        <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-6 w-full font-bold">
+          <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-4">
+            <h2 class="fluid-title text-slate-950 font-black">🗓️ 一週服藥打卡卡片</h2>
+            <button type="button" onclick="window.requestResetWeeklyLogs()" class="text-base font-black text-rose-600 bg-rose-50 px-6 py-3 rounded-2xl border-2 border-rose-200">⚠️ 歸零本週紀錄</button>
+          </div>
+          <div class="grid grid-cols-7 gap-2 overflow-x-auto no-scrollbar w-full" id="weekGrid"></div>
+        </div>
+      </div>
+
+      <div id="editView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-8 w-full animate-fade">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-100 pb-5">
           <div>
-            <div class="text-3xl sm:text-5xl font-black tracking-tight" id="liveClock">00:00:00</div>
-            <div class="text-sm sm:text-base text-slate-300 mt-1 font-bold" id="liveDate">--年--月--日</div>
+            <h2 class="fluid-title text-slate-950 font-black">⚙️ 正在編輯您的用藥規劃</h2>
+            <p class="text-base text-slate-500 mt-2 font-bold">在此可以完整修改每一項藥物的效用、注意事項與禁忌說明。</p>
           </div>
-          <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-2 md:pt-0">
-            <span class="text-sm sm:text-base text-slate-300 block font-bold">⏱️ 下一時段倒計時：</span>
-            <span class="text-2xl sm:text-4xl font-black text-amber-300 block mt-1" id="nextDoseCountdown">--小時--分</span>
-          </div>
+          <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-6 py-4 rounded-2xl border-2 border-slate-300 shadow-sm transition-all flex items-center gap-2 text-xl">⬅️ 返回藥盒主頁</button>
         </div>
-      </div>
 
-      <!-- 三部曲監控 (文字尺寸優化) -->
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full">
-        
-        <!-- 前一階段 -->
-        <div class="bg-slate-50 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-4">
-              <h3 class="fluid-subtitle text-slate-500 font-black">⏮️ 前一階段用藥</h3>
-              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="prevSlotTimeTag">--:--</span>
-            </div>
-            <div class="text-slate-800 mb-4">
-              <div class="fluid-subtitle text-brand-700 font-black" id="prevSlotName">--</div>
-              <div class="fluid-meta text-rose-600 bg-rose-50 px-3 py-1 rounded-lg mt-2 inline-block font-black" id="prevDoseElapsed">已過去：--</div>
-            </div>
-            <div id="prevMedicationsList" class="space-y-4"></div>
+        <div class="bg-slate-50 p-6 rounded-3xl">
+          <label class="block fluid-meta font-black text-slate-700 mb-2">修改您的姓名</label>
+          <input type="text" id="editUsername" class="w-full h-16 bg-white border-2 border-slate-200 rounded-2xl px-6 font-black focus:outline-none focus:ring-4 focus:ring-emerald-500 text-2xl relative z-10">
+        </div>
+
+        <!-- 檔案備份匯出匯入區塊 -->
+        <div class="bg-brand-50 p-6 rounded-3xl space-y-4">
+          <span class="fluid-body font-black text-brand-800 block">📦 備份設定檔案管理:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button type="button" onclick="window.exportConfig()" class="h-16 bg-white hover:bg-brand-100 text-brand-800 font-black text-xl px-6 rounded-2xl border-2 border-brand-200 transition-all shadow-sm">📥 匯出當前配置 (.json)</button>
+            <label for="importFile" class="h-16 bg-white hover:bg-brand-100 text-brand-800 font-black text-xl px-6 rounded-2xl border-2 border-brand-200 flex items-center justify-center cursor-pointer transition-all shadow-sm">📤 載入備份規劃</label>
+            <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
           </div>
         </div>
 
-        <!-- 目前進行中 (最醒目大字) -->
-        <div class="bg-white rounded-3xl p-6 border-4 border-emerald-500 shadow-xl flex flex-col justify-between transform lg:scale-105 z-10 relative">
-          <div class="absolute top-0 right-10 transform -translate-y-1/2">
-            <span class="bg-emerald-500 text-white text-base font-black px-6 py-2 rounded-full shadow-lg">當下進行中</span>
-          </div>
-          <div>
-            <div class="flex justify-between items-center border-b border-emerald-100 pb-4 mb-5">
-              <h3 class="fluid-title text-slate-950 flex items-center gap-3 font-black">
-                <span class="w-4 h-4 bg-rose-500 rounded-full animate-pulse"></span>
-                目前應服藥物
-              </h3>
-              <span class="fluid-subtitle font-black text-rose-500 bg-rose-50 border-2 border-rose-200 px-4 py-2 rounded-full" id="currentSlotTimeTag">--:--</span>
-            </div>
-            <div id="currentMedicationsList" class="space-y-5 mb-6"></div>
-          </div>
-          <div class="pt-5 mt-auto border-t border-slate-100">
-            <button type="button" onclick="window.markCurrentSlotAsTaken()" id="takeButton" class="w-full h-20 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-2xl rounded-2xl shadow-xl transition-all flex items-center justify-center gap-4">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/>
-              </svg>
-              確認此時段已服藥
-            </button>
-          </div>
-        </div>
+        <div id="editorSlotsContainer" class="space-y-6 w-full"></div>
 
-        <!-- 下一階段 -->
-        <div class="bg-slate-50 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-4">
-              <h3 class="fluid-subtitle text-slate-500 font-black">⏭️ 後一階段用藥</h3>
-              <span class="fluid-meta font-black text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="nextSlotTimeTag">--:--</span>
-            </div>
-            <div class="text-slate-800 mb-4">
-              <div class="fluid-subtitle text-brand-700 font-black" id="prevSlotName">--</div>
-              <div class="fluid-meta text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg mt-2 inline-block font-black" id="nextDoseTargetTime">預計還有：--</div>
-            </div>
-            <div id="nextMedicationsList" class="space-y-4"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 全日安排大綱 -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 w-full">
-        <h3 class="fluid-subtitle text-slate-900 border-b-2 border-slate-100 pb-3 font-black">📋 全日服藥安排大綱 (藥品細項總覽)</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="dailyOverviewContainer"></div>
-      </div>
-
-      <!-- 重要提醒區 (大字高對比) -->
-      <div class="bg-amber-50 border-4 border-amber-500 rounded-3xl p-7 shadow-lg space-y-5 w-full">
-        <h3 class="fluid-title text-amber-950 flex items-center gap-3 font-black">
-          <span>⚠️ 重要用藥與飲食安全提醒</span>
-        </h3>
-        <div class="space-y-6 text-slate-900 font-bold fluid-body line-height-elder">
-          <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
-            <h4 class="text-amber-900 font-black fluid-subtitle mb-2">1. 妥寧（血脂藥）與睡前服用的科學依據：</h4>
-            <p>
-              <span class="text-rose-600 font-black underline">【避開交互作用】</span>：將鈣片移至睡前，能與早上的「魚油」達到完美的時段區隔，徹底避免魚油脂肪酸與鈣離子在高濃度下產生皂化反應而降低吸收率的問題。<br>
-              <span class="text-emerald-700 font-black underline">【符合生理時鐘】</span>：人體合成膽固醇的高峰期主要在半夜，睡前服用妥寧能達到極佳的抑制效果，同時簡化日間用藥流程。
-            </p>
-          </div>
-          <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
-            <h4 class="text-amber-900 font-black fluid-subtitle mb-2">2. 高血壓藥物與飲食禁忌：</h4>
-            <p>
-              服用高血壓藥物期間，<span class="text-rose-600 font-black underline italic">絕對要避免食用「葡萄柚」或「香柚」</span>。柚類成分會抑制小腸及肝臟中的代謝酵素 (CYP3A4)，導致血壓藥在血中濃度異常升高，引發低血壓、心跳過快等危險。若您的血壓藥包含「血管收縮素轉化酶抑制劑」或「保鉀型利尿劑」，請<span class="text-rose-600 font-black underline">避免使用低鈉鹽</span>（低鈉鹽常以氯化鉀代替氯化鈉），以免體內鉀離子過高，引發高血鉀症及心律不整。
-            </p>
-          </div>
-          <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
-            <h4 class="text-amber-900 font-black fluid-subtitle mb-2">3. 骨科藥物的使用與交互作用：</h4>
-            <p>
-              消炎止痛藥與肌肉鬆弛劑皆屬於「症狀緩解藥物」，未感疼痛時不需服用。服用期間<span class="text-rose-600 font-black underline">請勿飲酒</span>，酒精會加重消炎藥對胃黏膜的傷害，且與肌肉鬆弛劑併用會產生中樞神經協同抑制作用，導致過度嗜睡、呼吸抑制或步態不穩等危險。
-            </p>
-          </div>
+        <div class="pt-8 border-t-2 border-slate-100 flex gap-4">
+          <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-18 rounded-2xl font-black text-slate-500 hover:bg-slate-100 text-xl border-2 border-slate-200">取消並返回</button>
+          <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-18 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-2xl rounded-2xl shadow-xl transition-all">💾 儲存並套用規劃</button>
         </div>
       </div>
+    </main>
+  </div>
 
-      <div class="bg-slate-100 border-2 border-slate-300 rounded-3xl p-6 font-bold text-slate-800 fluid-meta line-height-elder">
-        <h4 class="fluid-subtitle text-slate-950 font-black mb-2">💡 醫療專業免責聲明：</h4>
-        本規劃表係依據各藥物與保健食品之普遍藥理學特性所擬定之優化時間排程。由於個人體質差異，<span class="text-rose-600 font-black underline">實際服用前請務必先遵循您的醫囑指示</span>，回診時請將此規劃表提供給您的主治醫師或藥師進行最終確認。
-      </div>
-    </div>
+  <!-- 浮動內容縮放控制項 (獨立按鈕) -->
+  <div class="fixed bottom-8 right-6 flex flex-col gap-3 z-50">
+    <button type="button" onclick="window.adjustZoom(0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">＋</button>
+    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">－</button>
+    <button type="button" onclick="window.resetZoom()" class="w-14 h-14 bg-brand-600 rounded-full shadow-2xl flex items-center justify-center text-sm font-black text-white hover:bg-brand-700 active:scale-90 transition-all">標準</button>
+  </div>
 
-    <!-- 一週打卡 (大標籤) -->
-    <div id="weekView" class="hidden space-y-4 w-full">
-      <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-6 w-full font-bold text-center">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b pb-4">
-          <h2 class="fluid-title text-slate-950 font-black">🗓️ 一週服藥打卡卡片</h2>
-          <button id="resetWeeklyLogBtn" type="button" onclick="window.requestResetWeeklyLogs()" class="text-base font-black text-rose-600 bg-rose-50 px-6 py-3 rounded-2xl border-2 border-rose-200 transition-all">
-            ⚠️ 歸零本週紀錄
-          </button>
-        </div>
-        <div class="grid grid-cols-7 gap-2 overflow-x-auto no-scrollbar w-full" id="weekGrid"></div>
-      </div>
-    </div>
-
-    <!-- 藥盒編輯規劃 -->
-    <div id="editView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-8 w-full">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-100 pb-5">
-        <div>
-          <h2 class="fluid-title text-slate-950 font-black">⚙️ 正在編輯您的用藥規劃</h2>
-          <p class="fluid-meta text-slate-500 mt-2 font-bold">在此可以完整修改每一項藥物的效用、注意事項與禁忌說明。</p>
-        </div>
-        <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-6 py-4 rounded-2xl border-2 border-slate-300 shadow-sm transition-all flex items-center gap-2">⬅️ 返回藥盒主頁</button>
-      </div>
-
-      <div class="bg-slate-50 p-6 rounded-3xl">
-        <label class="block fluid-meta font-black text-slate-700 mb-2">修改您的姓名</label>
-        <input type="text" id="editUsername" class="w-full h-16 bg-white border-2 border-slate-200 rounded-2xl px-6 font-black focus:outline-none focus:ring-4 focus:ring-emerald-500 text-xl relative z-10">
-      </div>
-
-      <!-- 檔案匯出匯入 -->
-      <div class="bg-brand-50 p-6 rounded-3xl space-y-4">
-        <span class="fluid-body font-black text-brand-800 block">📦 備份設定檔案管理:</span>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button type="button" onclick="window.exportConfig()" class="h-14 bg-white hover:bg-brand-100 text-brand-800 font-black text-lg px-6 rounded-2xl border-2 border-brand-200 transition-all shadow-sm">📥 匯出當前配置 (.json)</button>
-          <label for="importFile" class="h-14 bg-white hover:bg-brand-100 text-brand-800 font-black text-lg px-6 rounded-2xl border-2 border-brand-200 flex items-center justify-center cursor-pointer transition-all shadow-sm">📤 載入備份規劃</label>
-          <input type="file" id="importFile" class="hidden" accept=".json" onchange="window.importConfig(event)">
-        </div>
-      </div>
-
-      <div id="editorSlotsContainer" class="space-y-6 w-full"></div>
-
-      <div class="pt-8 border-t-2 border-slate-100 flex gap-4">
-        <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-16 rounded-2xl font-black text-slate-500 hover:bg-slate-100 text-lg border-2 border-slate-200 transition-all">取消並返回</button>
-        <button type="button" onclick="window.saveEditorConfig()" class="flex-1 h-16 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xl rounded-2xl shadow-xl transition-all">💾 儲存並套用規劃</button>
-      </div>
-    </div>
-  </main>
-
-  <footer class="bg-slate-300 py-6 text-center text-sm text-slate-600 w-full mt-auto font-black">
+  <footer class="bg-slate-300 py-6 text-center text-sm text-slate-600 w-full mt-auto font-black shrink-0">
     <p>© 2026 頤寧安全用藥監控系統 (戴漢彬先生專屬版本)</p>
   </footer>
 
-  <div id="toastMessage" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-lg font-black px-10 py-5 rounded-full shadow-2xl opacity-0 transform translate-y-4 pointer-events-none transition-all duration-300 z-50 flex items-center gap-3">
+  <div id="toastMessage" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-lg font-black px-10 py-5 rounded-full shadow-2xl opacity-0 transform translate-y-4 pointer-events-none transition-all duration-300 z-[100] flex items-center gap-3">
     <span id="toastIcon">💡</span><span id="toastText">訊息</span>
   </div>
 
   <script>
-    // 預設資料庫：完整植入附件內容，一字不漏
     const defaultSchedule = [
       {
-        id: "slot-3vbx7brcf",
-        name: "早餐後",
-        time: "08:30",
-        description: "隨餐或飯後30分鐘內。集中處理白天所需的營養素，工作前服用即可完成，避免干擾日間工作。",
+        id: "slot-3vbx7brcf", name: "早餐後", time: "08:30",
+        description: "隨餐或飯後30分鐘內。此時段集中處理白天所需的營養素，避免干擾日間工作。",
         items: [
           { id: "item-b", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，若含有脂溶性營養素或合併配方，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
           { id: "item-l", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。極度依賴食物中的油脂來帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
@@ -290,9 +296,7 @@
         ]
       },
       {
-        id: "slot-vyiblho7v",
-        name: "午餐後",
-        time: "12:30",
+        id: "slot-vyiblho7v", name: "午餐後", time: "12:30",
         description: "隨餐或飯後30分鐘內。非類固醇消炎止痛藥對胃黏膜刺激性較大，絕對必須飯後服用。",
         items: [
           { id: "item-p1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。", sideEffect: "絕對必須飯後服用，不可空腹，以免傷胃。" },
@@ -300,9 +304,7 @@
         ]
       },
       {
-        id: "slot-j9brkk69g",
-        name: "晚餐後",
-        time: "18:30",
+        id: "slot-j9brkk69g", name: "晚餐後", time: "18:30",
         description: "隨餐或飯後30分鐘內。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。",
         items: [
           { id: "item-h1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。固定於晚餐後服用以防清晨血壓飆升。", sideEffect: "絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素導致血壓藥濃度過高引發危險。避免使用低鈉鹽以免體內鉀離子過高。" },
@@ -310,9 +312,7 @@
         ]
       },
       {
-        id: "slot-kj98ovr7n",
-        name: "夜間睡前",
-        time: "22:00",
+        id: "slot-kj98ovr7n", name: "夜間睡前", time: "22:00",
         description: "就寢前30分鐘。妥寧不受空腹限制。鈣片利用靜止吸收、助眠並與魚油區隔。",
         items: [
           { id: "item-t1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。固定於睡前服用可精準抑制深夜肝臟合成膽固醇的高峰期。", sideEffect: "不受空腹或飯後限制，睡前服可避開日間忙碌時段以防漏藥。" },
@@ -320,9 +320,7 @@
         ]
       },
       {
-        id: "slot-n64cn82j1",
-        name: "骨科備用藥",
-        time: "隨時",
+        id: "slot-n64cn82j1", name: "骨科備用藥", time: "隨時",
         description: "若夜間因足跟骨刺疼痛難耐影響睡眠時使用。",
         items: [
           { id: "item-p2", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。" },
@@ -334,78 +332,159 @@
     window.appState = {
       username: "戴漢彬",
       schedule: JSON.parse(JSON.stringify(defaultSchedule)),
-      weeklyLogs: {}, takenLogs: {}
+      takenLogs: {}, zoom: 1.0
     };
 
     window.currentView = 'day';
     window.boxId = "admin_self";
-    window.isOfflineMode = true; 
-    
+
+    window.adjustZoom = (delta) => {
+      window.appState.zoom = Math.min(Math.max(window.appState.zoom + delta, 0.7), 2.0);
+      document.documentElement.style.setProperty('--content-scale', window.appState.zoom);
+    };
+    window.resetZoom = () => {
+      window.appState.zoom = 1.0;
+      document.documentElement.style.setProperty('--content-scale', 1.0);
+    };
+
     window.addEventListener('DOMContentLoaded', () => {
       loadOfflineState();
       initClock();
       renderApp();
-      setupFirebaseOffline();
+      setupFirebaseUI();
     });
 
     function loadOfflineState() {
-      const saved = localStorage.getItem('yining_med_v5_full');
+      const saved = localStorage.getItem('yining_med_v6_full');
       if (saved) {
         try {
           const loaded = JSON.parse(saved);
           if (loaded && loaded.schedule && loaded.schedule.length >= 5) {
-            window.appState = loaded;
+            window.appState.username = loaded.username || "戴漢彬";
+            window.appState.schedule = loaded.schedule;
+            window.appState.takenLogs = loaded.takenLogs || {};
           }
         } catch (e) {}
       }
+      window.resetZoom(); // 每次打開回復預設倍率
     }
 
     function saveOfflineState() {
-      localStorage.setItem('yining_med_v5_full', JSON.stringify(window.appState));
+      localStorage.setItem('yining_med_v6_full', JSON.stringify({
+        username: window.appState.username,
+        schedule: window.appState.schedule,
+        takenLogs: window.appState.takenLogs
+      }));
     }
 
-    function setupFirebaseOffline() {
+    function setupFirebaseUI() {
       const badge = document.getElementById('cloudStatusBadge');
       badge.textContent = "安全本機儲存";
-      badge.className = "text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-black";
+      badge.className = "text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black";
     }
 
     function renderApp() {
-      const name = window.appState.username || "戴漢彬";
-      document.getElementById('headerUserDisplay').textContent = name;
+      document.getElementById('headerUserDisplay').textContent = window.appState.username;
       renderDailyOverview();
       renderWeeklyGrid();
+      calculateTimesAndReminders();
     }
 
-    function renderDailyOverview() {
-      const container = document.getElementById('dailyOverviewContainer');
-      if (!container) return;
-      const today = getTodayStr();
+    function renderMedicationListDetailed(id, items) {
+      const el = document.getElementById(id); if (!el) return;
+      if (!items || items.length === 0) { el.innerHTML = `<div class="text-slate-400 font-bold text-center py-4">無安排</div>`; return; }
       let html = "";
-      window.appState.schedule.forEach(slot => {
-        const isTaken = window.appState.takenLogs[today]?.[slot.id];
+      items.forEach(item => {
         html += `
-          <div class="p-6 rounded-3xl border-2 ${isTaken ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} space-y-4">
-            <div class="flex justify-between items-start">
-              <div>
-                <span class="fluid-subtitle font-black text-slate-950">${slot.name}</span>
-                <span class="fluid-meta bg-slate-200 text-slate-700 px-3 py-1 rounded-xl ml-2 font-black">${slot.time}</span>
-              </div>
-              ${isTaken ? `<span class="fluid-meta font-black text-emerald-600">✓已服 ${isTaken}</span>` : ''}
+          <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-sm space-y-4">
+            <div class="flex justify-between items-center gap-2">
+              <span class="text-2xl sm:text-3xl font-black text-slate-950">${item.name}</span>
+              <span class="text-sm font-black border-2 border-brand-200 px-3 py-1 rounded-xl bg-brand-50 text-brand-800">1 顆</span>
             </div>
-            <div class="fluid-meta text-slate-600 font-bold line-height-elder">${slot.description}</div>
-            <div class="border-t-2 border-dashed border-slate-200 pt-3 space-y-3">
-              ${slot.items.map(item => `<div class="fluid-body text-slate-900 font-black">• ${item.name} <span class="text-slate-400 text-sm">(${item.dosage})</span></div>`).join('')}
+            <div class="p-4 bg-brand-50/50 rounded-2xl text-slate-900 leading-relaxed font-bold">
+              <strong class="text-brand-900 font-black">【效能】：</strong>${item.effect}
             </div>
+            ${item.sideEffect ? `
+              <div class="p-4 bg-rose-50 rounded-2xl border-2 border-rose-100 text-rose-800 font-bold leading-relaxed">
+                <strong class="text-rose-950 font-black">【⚠️ 注意】：</strong>${item.sideEffect}
+              </div>` : ''}
           </div>
         `;
       });
-      container.innerHTML = html;
+      el.innerHTML = html;
+    }
+
+    function calculateTimesAndReminders() {
+      const now = new Date();
+      const curM = now.getHours() * 60 + now.getMinutes();
+      const valid = window.appState.schedule.filter(s => s.time !== "隨時").map(s => {
+        const [h, m] = s.time.split(':').map(Number);
+        return { ...s, total: h * 60 + m };
+      }).sort((a,b) => a.total - b.total);
+      
+      if (valid.length === 0) return;
+      
+      let curIdx = 0;
+      if (curM >= valid[valid.length-1].total || curM < valid[0].total) curIdx = valid.length - 1;
+      else { for (let i=0; i<valid.length-1; i++) if (curM >= valid[i].total && curM < valid[i+1].total) { curIdx = i; break; } }
+      
+      const cur = valid[curIdx];
+      const prv = valid[(curIdx - 1 + valid.length) % valid.length];
+      const nxt = valid[(curIdx + 1) % valid.length];
+
+      // 修正名稱與時段顯示
+      document.getElementById('prevSlotName').textContent = prv.name;
+      document.getElementById('prevSlotTimeTag').textContent = prv.time;
+      renderMedicationListDetailed('prevMedicationsList', prv.items);
+
+      document.getElementById('currentSlotName').textContent = cur.name;
+      document.getElementById('currentSlotTimeTag').textContent = cur.time;
+      renderMedicationListDetailed('currentMedicationsList', cur.items);
+      
+      const today = getTodayStr();
+      const btn = document.getElementById('takeButton');
+      const isTaken = window.appState.takenLogs[today]?.[cur.id];
+      if (isTaken) {
+        btn.disabled = true;
+        btn.className = "w-full h-20 bg-slate-300 text-slate-500 font-black text-xl rounded-2xl flex items-center justify-center gap-4 border-2 border-slate-300 shadow-none";
+        btn.innerHTML = `✓ 已於 ${isTaken} 完成`;
+      } else {
+        btn.disabled = false;
+        btn.className = "w-full h-20 bg-emerald-600 text-white font-black text-2xl rounded-2xl shadow-xl flex items-center justify-center gap-4";
+        btn.innerHTML = `確認此時段已服藥`;
+        btn.onclick = () => window.markSlotAsTaken(cur.id);
+      }
+
+      document.getElementById('nextSlotName').textContent = nxt.name;
+      document.getElementById('nextSlotTimeTag').textContent = nxt.time;
+      renderMedicationListDetailed('nextMedicationsList', nxt.items);
+
+      let rem = nxt.total - curM; if (rem <= 0) rem += 1440;
+      document.getElementById('nextDoseCountdown').textContent = `${Math.floor(rem/60)}小時 ${rem%60}分`;
+    }
+
+    function renderDailyOverview() {
+      const container = document.getElementById('dailyOverviewContainer'); if (!container) return;
+      const today = getTodayStr();
+      container.innerHTML = window.appState.schedule.map(slot => {
+        const isTaken = window.appState.takenLogs[today]?.[slot.id];
+        return `
+          <div class="p-6 rounded-3xl border-2 ${isTaken ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200 bg-slate-50/50'} font-bold">
+            <div class="flex justify-between items-start mb-2">
+              <span class="fluid-subtitle font-black text-slate-950">${slot.name} (${slot.time})</span>
+              ${isTaken ? `<span class="fluid-meta text-emerald-600 font-black">✓ 已服</span>` : ''}
+            </div>
+            <div class="fluid-meta text-slate-500 mb-3">${slot.description}</div>
+            <div class="border-t border-dashed border-slate-200 pt-2 space-y-2">
+              ${slot.items.map(i => `<div class="fluid-body text-slate-800">• ${i.name}</div>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderWeeklyGrid() {
-      const container = document.getElementById('weekGrid');
-      if (!container) return;
+      const container = document.getElementById('weekGrid'); if (!container) return;
       const days = ["一", "二", "三", "四", "五", "六", "日"];
       const today = new Date();
       const start = new Date(today);
@@ -413,18 +492,17 @@
       start.setDate(today.getDate() + (currentDay === 0 ? -6 : 1 - currentDay));
       let html = "";
       for (let i = 0; i < 7; i++) {
-        const loopDate = new Date(start);
-        loopDate.setDate(start.getDate() + i);
+        const loopDate = new Date(start); loopDate.setDate(start.getDate() + i);
         const dateStr = `${loopDate.getFullYear()}-${String(loopDate.getMonth() + 1).padStart(2, '0')}-${String(loopDate.getDate()).padStart(2, '0')}`;
         const isToday = loopDate.toDateString() === today.toDateString();
         html += `
-          <div class="bg-slate-50 rounded-2xl py-4 border-2 ${isToday ? 'border-brand-500 bg-brand-50/30' : 'border-slate-200'} font-black">
+          <div class="bg-slate-50 rounded-2xl py-4 border-2 ${isToday ? 'border-brand-500 bg-brand-50/30' : 'border-slate-200'} font-black text-center">
             <div class="text-sm text-slate-400">週${days[i]}</div>
             <div class="text-xl ${isToday ? 'text-brand-600' : 'text-slate-700'}">${loopDate.getDate()}</div>
             <div class="flex flex-col items-center gap-3 mt-4">
               ${window.appState.schedule.map(slot => {
                 const isTaken = window.appState.takenLogs[dateStr]?.[slot.id];
-                return `<div onclick="window.toggleWeeklyDose('${dateStr}','${slot.id}')" class="w-10 h-10 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all ${isTaken ? 'bg-emerald-500 border-emerald-500 text-white shadow' : 'bg-white border-slate-200 text-slate-200'} font-black text-sm">${isTaken ? '✓' : '+'}</div>`;
+                return `<div onclick="window.toggleWeeklyDose('${dateStr}','${slot.id}')" class="w-11 h-11 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all ${isTaken ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-200'} font-black text-base">${isTaken ? '✓' : '+'}</div>`;
               }).join('')}
             </div>
           </div>
@@ -438,73 +516,67 @@
       if (!window.appState.takenLogs[d]) window.appState.takenLogs[d] = {};
       if (window.appState.takenLogs[d][s]) { delete window.appState.takenLogs[d][s]; }
       else { window.appState.takenLogs[d][s] = time; }
-      saveOfflineState(); renderApp(); calculateTimesAndReminders();
+      saveOfflineState(); renderApp();
     }
 
-    function switchView(v) {
+    window.markSlotAsTaken = (id) => {
+      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      const today = getTodayStr();
+      if (!window.appState.takenLogs[today]) window.appState.takenLogs[today] = {};
+      window.appState.takenLogs[today][id] = time;
+      saveOfflineState(); renderApp(); showToast(`✅ 已記錄於 ${time} 服用！`);
+    };
+
+    window.switchView = (v) => {
       window.currentView = v;
       ['dayView', 'weekView', 'editView'].forEach(id => document.getElementById(id).classList.add('hidden'));
-      ['btnDayView', 'btnWeekView', 'btnEditView'].forEach(id => document.getElementById(id).className = "px-2 py-1 rounded font-black text-[10px] sm:text-xs transition-all text-slate-300");
-      
+      ['btnDayView', 'btnWeekView', 'btnEditView'].forEach(id => document.getElementById(id).className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300");
       document.getElementById(v + 'View').classList.remove('hidden');
-      document.getElementById('btn' + v.charAt(0).toUpperCase() + v.slice(1) + 'View').className = "px-2 py-1 rounded font-black text-[10px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm";
+      document.getElementById('btn' + v.charAt(0).toUpperCase() + v.slice(1) + 'View').className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm";
       if (v === 'edit') renderEditor();
-    }
+    };
 
     function renderEditor() {
       const container = document.getElementById('editorSlotsContainer');
-      let html = "";
-      window.appState.schedule.forEach((slot, sIdx) => {
-        html += `
-          <div class="editor-slot bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 relative space-y-4" data-slot-id="${slot.id}">
-            <div class="flex justify-between">
-              <span class="fluid-subtitle font-black text-brand-800">時段：${slot.name}</span>
-              <button onclick="window.removeSlot(${sIdx})" class="text-rose-500 font-black text-sm">✕ 刪除時段</button>
-            </div>
-            <div class="grid grid-cols-2 gap-4 font-black">
-              <input type="text" value="${slot.name}" class="slot-n h-14 border-2 rounded-xl px-4 text-lg">
-              <input type="text" value="${slot.time}" class="slot-t h-14 border-2 rounded-xl px-4 text-lg">
-            </div>
-            <textarea class="slot-d w-full h-24 border-2 rounded-xl p-4 font-bold text-base">${slot.description}</textarea>
-            <div class="bg-white p-4 rounded-2xl border-2 space-y-4">
-              <div class="flex justify-between border-b pb-2">
-                <span class="font-black text-slate-700">藥品細項</span>
-                <button onclick="window.addItem(${sIdx})" class="bg-brand-600 text-white px-3 py-1 rounded-lg text-sm font-black">+ 新增藥品</button>
-              </div>
-              <div class="item-list space-y-4">
-                ${slot.items.map((item, iIdx) => `
-                  <div class="bg-slate-50 p-4 rounded-xl border-2 space-y-3 relative">
-                    <button onclick="window.removeItem(${sIdx},${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black">✕</button>
-                    <div class="font-black text-slate-500 text-sm">藥名 / 劑量</div>
-                    <div class="grid grid-cols-2 gap-2">
-                      <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 font-black text-lg">
-                      <input type="text" value="${item.dosage}" class="i-d h-12 border-2 rounded-lg px-3 font-black text-lg">
-                    </div>
-                    <div class="font-black text-slate-500 text-sm">主要效能說明</div>
-                    <textarea class="i-e w-full h-32 border-2 rounded-lg p-3 font-bold line-height-elder">${item.effect}</textarea>
-                    <div class="font-black text-rose-500 text-sm">⚠️ 注意事項 / 禁忌</div>
-                    <textarea class="i-s w-full h-32 border-2 rounded-lg p-3 font-bold text-rose-700 line-height-elder">${item.sideEffect}</textarea>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
+      container.innerHTML = window.appState.schedule.map((slot, sIdx) => `
+        <div class="editor-slot bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 space-y-4" data-slot-id="${slot.id}">
+          <div class="flex justify-between font-black text-brand-800">
+            <span class="fluid-subtitle">時段編輯：${slot.name}</span>
+            <button onclick="window.removeSlot(${sIdx})" class="text-rose-500 text-sm">✕ 刪除時段</button>
           </div>
-        `;
-      });
-      container.innerHTML = html;
+          <div class="grid grid-cols-2 gap-4">
+            <input type="text" value="${slot.name}" class="slot-n h-14 border-2 rounded-xl px-4 font-black text-xl">
+            <input type="text" value="${slot.time}" class="slot-t h-14 border-2 rounded-xl px-4 font-black text-xl">
+          </div>
+          <textarea class="slot-d w-full h-24 border-2 rounded-xl p-4 font-bold text-lg">${slot.description}</textarea>
+          <div class="item-list space-y-4">
+            ${slot.items.map((item, iIdx) => `
+              <div class="bg-white p-5 rounded-2xl border-2 space-y-3 relative font-bold">
+                <button onclick="window.removeItem(${sIdx},${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black">✕</button>
+                <div class="grid grid-cols-2 gap-3">
+                  <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 text-lg font-black">
+                  <input type="text" value="${item.dosage}" class="i-dosage h-12 border-2 rounded-lg px-3 text-lg">
+                </div>
+                <textarea class="i-e w-full h-24 border-2 rounded-lg p-3 text-base" placeholder="主要效用">${item.effect}</textarea>
+                <textarea class="i-s w-full h-24 border-2 rounded-lg p-3 text-base text-rose-700" placeholder="注意事項/警語">${item.sideEffect}</textarea>
+              </div>
+            `).join('')}
+            <button onclick="window.addItem(${sIdx})" class="w-full h-12 bg-slate-200 rounded-xl font-black">+ 新增藥品</button>
+          </div>
+        </div>
+      `).join('');
       document.getElementById('editUsername').value = window.appState.username;
     }
 
     window.saveEditorConfig = function() {
       const schedule = [];
-      const slots = document.querySelectorAll('.editor-slot');
-      slots.forEach(s => {
+      document.querySelectorAll('.editor-slot').forEach(s => {
         const items = [];
-        s.querySelectorAll('.bg-slate-50.p-4').forEach(i => {
+        s.querySelectorAll('.bg-white.p-5').forEach(i => {
           items.push({
-            id: 'i-' + Math.random(),
+            id: 'item-' + Math.random(),
             name: i.querySelector('.i-n').value,
-            dosage: i.querySelector('.i-d').value,
+            dosage: i.querySelector('.i-dosage').value,
             effect: i.querySelector('.i-e').value,
             sideEffect: i.querySelector('.i-s').value
           });
@@ -522,99 +594,31 @@
       saveOfflineState(); showToast("💾 規劃已儲存！"); switchView('day');
     };
 
-    function renderMedicationListOnly(id, items) {
-      const el = document.getElementById(id); if (!el) return;
-      if (!items || items.length === 0) { el.innerHTML = `<div class="text-slate-400 font-bold text-center py-4">此時段無安排</div>`; return; }
-      let html = "";
-      items.forEach(item => {
-        html += `
-          <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-sm space-y-3">
-            <div class="flex justify-between items-center gap-2">
-              <span class="text-2xl sm:text-3xl font-black text-slate-950">${item.name}</span>
-              <span class="text-sm font-black border-2 border-brand-200 px-3 py-1 rounded-xl bg-brand-50 text-brand-800">${item.dosage}</span>
-            </div>
-            <div class="p-3 bg-brand-50/50 rounded-2xl">
-              <div class="text-base text-slate-700 line-height-elder"><strong class="text-brand-900 font-black">【效能】：</strong>${item.effect}</div>
-            </div>
-            ${item.sideEffect ? `
-              <div class="p-3 bg-rose-50 rounded-2xl border border-rose-100">
-                <div class="text-base text-rose-800 line-height-elder"><strong class="text-rose-900 font-black">【⚠️ 叮嚀】：</strong>${item.sideEffect}</div>
-              </div>` : ''}
-          </div>
-        `;
-      });
-      el.innerHTML = html;
-    }
-
-    function calculateTimesAndReminders() {
-      const now = new Date();
-      const curM = now.getHours() * 60 + now.getMinutes();
-      const valid = window.appState.schedule.filter(s => s.time !== "隨時").map(s => {
-        const [h, m] = s.time.split(':').map(Number);
-        return { ...s, total: h * 60 + m };
-      }).sort((a,b) => a.total - b.total);
-      if (valid.length === 0) return;
-      let curIdx = 0;
-      if (curM >= valid[valid.length-1].total || curM < valid[0].total) curIdx = valid.length - 1;
-      else { for (let i=0; i<valid.length-1; i++) if (curM >= valid[i].total && curM < valid[i+1].total) { curIdx = i; break; } }
-      
-      const cur = valid[curIdx];
-      const prv = valid[(curIdx - 1 + valid.length) % valid.length];
-      const nxt = valid[(curIdx + 1) % valid.length];
-
-      document.querySelectorAll('#prevSlotName').forEach(e => e.textContent = prv.name);
-      document.getElementById('prevSlotTimeTag').textContent = prv.time;
-      renderMedicationListOnly('prevMedicationsList', prv.items);
-
-      const btn = document.getElementById('takeButton');
-      document.querySelectorAll('#currentSlotName').forEach(e => e.textContent = cur.name);
-      document.querySelectorAll('#currentSlotTimeTag').forEach(e => e.textContent = cur.time);
-      renderMedicationListOnly('currentMedicationsList', cur.items);
-      const isTaken = window.appState.takenLogs[getTodayStr()]?.[cur.id];
-      if (isTaken) { btn.disabled = true; btn.className = "w-full h-20 bg-slate-300 text-slate-500 font-black text-xl rounded-2xl flex items-center justify-center gap-4 cursor-not-allowed shadow-none border-2 border-slate-300"; btn.innerHTML = `✓ 已於 ${isTaken} 服用`; }
-      else { btn.disabled = false; btn.className = "w-full h-20 bg-emerald-600 text-white font-black text-2xl rounded-2xl shadow-xl flex items-center justify-center gap-4"; btn.innerHTML = `確認此時段已服藥`; btn.onclick = () => window.markCurrentSlotAsTaken(cur.id); }
-
-      document.querySelectorAll('#nextSlotName').forEach(e => e.textContent = nxt.name);
-      document.getElementById('nextSlotTimeTag').textContent = nxt.time;
-      renderMedicationListOnly('nextMedicationsList', nxt.items);
-      let rem = nxt.total - curM; if (rem <= 0) rem += 1440;
-      document.getElementById('nextDoseCountdown').textContent = `${Math.floor(rem/60)}小時 ${rem%60}分`;
-    }
-
     function initClock() {
       setInterval(() => {
         const n = new Date();
         document.getElementById('liveClock').textContent = n.toLocaleTimeString('zh-TW', { hour12: false });
         document.getElementById('liveDate').textContent = `${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日 ${["日","一","二","三","四","五","六"][n.getDay()]}`;
-        if (window.currentView !== 'edit') calculateTimesAndReminders();
+        if (window.currentView === 'day') calculateTimesAndReminders();
       }, 1000);
     }
-
     function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function showToast(t) { const el = document.getElementById('toastMessage'); el.querySelector('#toastText').textContent = t; el.className = el.className.replace('opacity-0', 'opacity-100').replace('translate-y-4', 'translate-y-0'); setTimeout(() => { el.className = el.className.replace('opacity-100', 'opacity-0').replace('translate-y-0', 'translate-y-4'); }, 3000); }
-    
     window.exportConfig = function() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.appState, null, 2));
-      const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `頤寧雲端備份_${window.appState.username}.json`); a.click();
+      const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", `頤寧備份_${window.appState.username}.json`); a.click();
     };
     window.importConfig = function(e) {
       const f = e.target.files[0]; if (!f) return;
       const r = new FileReader(); r.onload = (ev) => {
-        try { const i = JSON.parse(ev.target.result); if (i.schedule) { window.appState = i; saveOfflineState(); renderApp(); renderEditor(); showToast("📤 載入成功，請點儲存。"); } } catch (err) { showToast("⚠️ 格式錯誤"); }
+        try { const i = JSON.parse(ev.target.result); if (i.schedule) { window.appState = i; saveOfflineState(); renderApp(); renderEditor(); showToast("📤 載入完成，請儲存。"); } } catch (err) { showToast("⚠️ 檔案格式錯誤"); }
       }; r.readAsText(f);
     };
-
-    window.markCurrentSlotAsTaken = function(id) {
-      const today = getTodayStr(); const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      if (!window.appState.takenLogs[today]) window.appState.takenLogs[today] = {};
-      window.appState.takenLogs[today][id] = time; saveOfflineState(); calculateTimesAndReminders(); renderApp(); showToast(`✅ 已記錄於 ${time} 服用！`);
-    };
-
-    window.requestResetWeeklyLogs = function() { if (confirm("重設本週打卡？")) { window.appState.takenLogs = {}; saveOfflineState(); renderApp(); showToast("🧹 紀錄已清空"); } };
     window.requestLockSettings = () => switchView('day');
-    window.addItem = (sIdx) => { window.appState.schedule[sIdx].items.push({ name: "新藥物", dosage: "1顆", effect: "效能", sideEffect: "" }); renderEditor(); };
+    window.addItem = (sIdx) => { window.appState.schedule[sIdx].items.push({ name: "新藥物", dosage: "1顆", effect: "", sideEffect: "" }); renderEditor(); };
     window.removeItem = (sIdx, iIdx) => { window.appState.schedule[sIdx].items.splice(iIdx, 1); renderEditor(); };
     window.removeSlot = (sIdx) => { window.appState.schedule.splice(sIdx, 1); renderEditor(); };
+    window.requestResetWeeklyLogs = () => { if(confirm("確定重設本週打卡？")) { window.appState.takenLogs = {}; saveOfflineState(); renderApp(); showToast("🧹 紀錄已清空"); } };
   </script>
 </body>
 </html>
