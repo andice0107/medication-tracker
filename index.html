@@ -44,7 +44,7 @@
       overflow-x: hidden;
     }
 
-    /* 只縮放內容區，頂部導航維持固定大小 */
+    /* 縮放內容區，頂部導航維持固定 */
     #zoomableArea {
       transform: scale(var(--content-scale));
       transform-origin: top center;
@@ -95,7 +95,7 @@
       </div>
 
       <nav class="bg-brand-700 p-0.5 rounded-lg flex gap-0.5 border border-brand-600 shrink-0">
-        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white">📅 一日</button>
+        <button type="button" id="btnDayView" onclick="window.switchView('day')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm">📅 一日</button>
         <button type="button" id="btnWeekView" onclick="window.switchView('week')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300">🗓️ 一週</button>
         <button type="button" id="btnEditView" onclick="window.switchView('edit')" class="px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300">⚙️ 編輯</button>
       </nav>
@@ -105,6 +105,7 @@
   <div class="zoom-wrapper flex-grow overflow-x-hidden overflow-y-auto">
     <main id="zoomableArea" class="w-full px-3 py-4 space-y-5 max-w-full">
 
+      <!-- 視圖1: 一日即時視圖 -->
       <div id="dayView" class="space-y-5 w-full">
         <!-- 即時狀態面板 -->
         <div class="bg-gradient-to-br from-brand-700 to-brand-800 rounded-2xl p-4 text-white shadow-md relative overflow-hidden w-full">
@@ -114,13 +115,14 @@
               <div class="text-3xl sm:text-5xl font-black tracking-tight" id="liveClock">00:00:00</div>
               <div class="text-sm sm:text-base text-slate-300 mt-0.5 font-bold" id="liveDate">2026年5月27日 星期三</div>
             </div>
-            <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-2">
+            <div class="text-left md:text-right w-full md:w-auto border-t md:border-t-0 border-white/10 pt-2 md:pt-0">
               <span class="text-sm sm:text-base text-slate-300 block font-bold">⏱️ 下一階段倒計時：</span>
               <span class="text-2xl sm:text-4xl font-black text-amber-300 block mt-0.5" id="nextDoseCountdown">--小時--分</span>
             </div>
           </div>
         </div>
 
+        <!-- 三部曲面板 -->
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-5 w-full">
           <!-- 前一階段 -->
           <div class="bg-slate-100 rounded-3xl p-5 border-2 border-slate-200 shadow-sm flex flex-col justify-between">
@@ -181,7 +183,6 @@
           </div>
         </section>
 
-        <!-- 全日安排大綱 -->
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4 w-full">
           <h3 class="fluid-subtitle text-slate-900 border-b-2 border-slate-100 pb-3 font-black">📋 全日服藥安排大綱</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="dailyOverviewContainer"></div>
@@ -208,7 +209,7 @@
             <div class="p-4 bg-white rounded-2xl border-2 border-amber-200">
               <h4 class="text-amber-900 font-black fluid-subtitle mb-2">3. 骨科藥物的使用與交互作用：</h4>
               <p>
-                消炎止痛藥與肌肉鬆弛劑皆屬於「症狀緩解藥物」，未感疼痛時不需服用。服用期間<span class="text-rose-600 font-black underline">請勿飲酒</span>，酒精會加重消炎藥對胃黏膜的傷害，且與肌肉鬆弛劑併用會產生中樞神經協同抑制作用，導致過度嗜睡、呼吸抑制或步態不穩等危險。
+                消炎止痛藥與肌肉鬆弛劑皆屬於「症狀緩解藥物」，未感疼痛時不需服用。服用期間<span class="text-rose-600 font-black underline">請勿飲酒</span>，酒精會加重消炎藥對胃黏膜的傷害，且與肌肉鬆弛劑併用會產生中樞神經協同抑制作用，導致過度嗜睡、呼吸抑制或步態不穩等危覽。
               </p>
             </div>
           </div>
@@ -264,9 +265,9 @@
   </div>
 
   <div class="fixed bottom-8 right-6 flex flex-col gap-3 z-50">
-    <button type="button" onclick="window.adjustZoom(0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">＋</button>
-    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-14 h-14 bg-white/90 backdrop-blur border-2 border-brand-500 rounded-full shadow-2xl flex items-center justify-center text-3xl font-black text-brand-700 hover:bg-brand-50 active:scale-90 transition-all">－</button>
-    <button type="button" onclick="window.resetZoom()" class="w-14 h-14 bg-brand-600 rounded-full shadow-2xl flex items-center justify-center text-sm font-black text-white hover:bg-brand-700 active:scale-90 transition-all">標準</button>
+    <button type="button" onclick="window.adjustZoom(0.1)" class="w-16 h-16 bg-white/70 backdrop-blur-md border-2 border-brand-500/30 rounded-full shadow-2xl flex items-center justify-center text-4xl font-black text-brand-700 hover:bg-white/90 active:scale-90 transition-all">＋</button>
+    <button type="button" onclick="window.adjustZoom(-0.1)" class="w-16 h-16 bg-white/70 backdrop-blur-md border-2 border-brand-500/30 rounded-full shadow-2xl flex items-center justify-center text-4xl font-black text-brand-700 hover:bg-white/90 active:scale-90 transition-all">－</button>
+    <button type="button" onclick="window.resetZoom()" class="w-16 h-16 bg-brand-600/70 backdrop-blur-md rounded-full shadow-2xl flex items-center justify-center text-sm font-black text-white hover:bg-brand-700/90 active:scale-90 transition-all leading-tight">標準</button>
   </div>
 
   <footer class="bg-slate-300 py-6 text-center text-sm text-slate-600 w-full mt-auto font-black shrink-0">
@@ -300,24 +301,24 @@
         id: "slot-j9brkk69g", name: "晚餐後", time: "18:30",
         description: "隨餐或飯後30分鐘內。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。",
         items: [
-          { id: "item-h1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。固定於晚餐後服用以防清晨血壓飆升。", sideEffect: "絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素導致血壓藥濃度過高引發危險。避免使用低鈉鹽以免體內鉀離子過高。" },
-          { id: "item-l1", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "主要成分為水飛薊素 (Silymarin)，屬於脂溶性成分。", sideEffect: "隨晚餐隨餐服用能大幅提升吸收率。" }
+          { id: "item-h1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素引發低血壓風險。若包含保鉀型利尿劑，避免使用含氯化鉀之低鈉鹽以免高血鉀。", sideEffect: "絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素導致血壓藥濃度過高引發危險。避免使用低鈉鹽以免體內鉀離子過高。" },
+          { id: "item-l1", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "主要成分為水飛薊素 (Silymarin)，屬於脂溶性成分，隨晚餐隨餐服用能大幅提升吸收率。", sideEffect: "隨晚餐隨餐服用能大幅提升吸收率。" }
         ]
       },
       {
         id: "slot-kj98ovr7n", name: "夜間睡前", time: "22:00",
         description: "就寢前30分鐘。妥寧不受空腹限制。鈣片利用身體靜止吸收、助眠並與魚油區隔。",
         items: [
-          { id: "item-t1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。固定於睡前服用可精準抑制深夜肝臟合成膽固醇的高峰期。", sideEffect: "不受空腹或飯後限制，睡前服可避開日間忙碌時段以防漏藥。" },
-          { id: "item-c1", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。", sideEffect: "與早晨魚油間隔12小時以上，完全避免產生皂化反應，確保兩者完美吸收。" }
+          { id: "item-t1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。固定於睡前服用可精準抑制深夜肝臟合成膽固醇的高峰期，且可避開日間忙碌防漏藥。", sideEffect: "不受空腹或飯後限制，睡前服可避開日間忙碌時段以防漏藥。" },
+          { id: "item-c1", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。與早晨魚油間隔12小時以上可避免產生皂化反應。", sideEffect: "與早晨魚油間隔12小時以上，完全避免產生皂化反應，確保兩者完美吸收。" }
         ]
       },
       {
         id: "slot-n64cn82j1", name: "骨科備用藥", time: "隨時",
-        description: "若夜間因足跟骨刺疼痛難耐影響睡眠時使用。",
+        description: "若夜間因足跟骨刺疼痛難耐影響睡眠時使用。消炎止痛藥切勿完全空腹服用。",
         items: [
-          { id: "item-p2", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。" },
-          { id: "item-m2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。", sideEffect: "帶來的嗜睡副作用在此時段有助於改善因痛失眠。" }
+          { id: "item-p2", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛（NSAIDs）。非感疼痛時不需服用。服用期間請勿飲酒，以免加重對胃黏膜傷害。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。請勿飲酒。" },
+          { id: "item-m2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用在此時段有助於改善因痛失眠。服用期間請勿飲酒。", sideEffect: "帶來的嗜睡副作用在此時段有助於改善因痛失眠。請勿飲酒。" }
         ]
       }
     ];
@@ -329,10 +330,9 @@
     };
 
     window.currentView = 'day';
-    window.boxId = "admin_self";
 
     window.adjustZoom = (delta) => {
-      window.appState.zoom = Math.min(Math.max(window.appState.zoom + delta, 0.7), 2.0);
+      window.appState.zoom = Math.min(Math.max(window.appState.zoom + delta, 0.7), 2.5);
       document.documentElement.style.setProperty('--content-scale', window.appState.zoom);
     };
     window.resetZoom = () => {
@@ -348,11 +348,11 @@
     });
 
     function loadOfflineState() {
-      const saved = localStorage.getItem('yining_med_v6_full');
+      const saved = localStorage.getItem('yining_med_v7_full');
       if (saved) {
         try {
           const loaded = JSON.parse(saved);
-          if (loaded && loaded.schedule && loaded.schedule.length >= 5) {
+          if (loaded && loaded.schedule) {
             window.appState.username = loaded.username || "戴漢彬";
             window.appState.schedule = loaded.schedule;
             window.appState.takenLogs = loaded.takenLogs || {};
@@ -362,7 +362,7 @@
     }
 
     function saveOfflineState() {
-      localStorage.setItem('yining_med_v6_full', JSON.stringify({
+      localStorage.setItem('yining_med_v7_full', JSON.stringify({
         username: window.appState.username,
         schedule: window.appState.schedule,
         takenLogs: window.appState.takenLogs
@@ -390,10 +390,10 @@
         html += `
           <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-sm space-y-4">
             <div class="flex justify-between items-center gap-2">
-              <span class="text-2xl sm:text-3xl font-black text-slate-950">${item.name}</span>
-              <span class="text-sm font-black border-2 border-brand-200 px-3 py-1 rounded-xl bg-brand-50 text-brand-800">${item.dosage}</span>
+              <span class="text-2xl sm:text-4xl font-black text-slate-950">${item.name}</span>
+              <span class="text-base font-black border-2 border-brand-200 px-4 py-1.5 rounded-xl bg-brand-50 text-brand-800">${item.dosage}</span>
             </div>
-            <div class="p-4 bg-brand-50/50 rounded-2xl text-slate-900 leading-relaxed font-bold">
+            <div class="p-4 bg-brand-50 rounded-2xl text-slate-900 leading-relaxed font-bold border border-brand-100">
               <strong class="text-brand-900 font-black">【效能】：</strong>${item.effect}
             </div>
             ${item.sideEffect ? `
@@ -441,7 +441,7 @@
         btn.innerHTML = `✓ 已於 ${isTaken} 完成`;
       } else {
         btn.disabled = false;
-        btn.className = "w-full h-20 bg-emerald-600 text-white font-black text-2xl rounded-2xl shadow-xl flex items-center justify-center gap-4";
+        btn.className = "w-full h-20 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-2xl rounded-2xl shadow-xl flex items-center justify-center gap-4";
         btn.innerHTML = `確認此時段已服藥`;
         btn.onclick = () => window.markSlotAsTaken(cur.id);
       }
@@ -465,9 +465,14 @@
               <span class="fluid-subtitle font-black text-slate-950">${slot.name} (${slot.time})</span>
               ${isTaken ? `<span class="fluid-meta text-emerald-600 font-black">✓ 已服</span>` : ''}
             </div>
-            <div class="fluid-meta text-slate-500 mb-3">${slot.description}</div>
-            <div class="border-t border-dashed border-slate-200 pt-2 space-y-2">
-              ${slot.items.map(i => `<div class="fluid-body text-slate-800 flex justify-between"><span>• ${i.name}</span><span class="text-slate-400 text-xs">${i.dosage}</span></div>`).join('')}
+            <div class="fluid-meta text-slate-500 mb-3 leading-relaxed">${slot.description}</div>
+            <div class="border-t border-dashed border-slate-200 pt-3 space-y-3">
+              ${slot.items.map(i => `
+                <div class="fluid-body text-slate-800 flex justify-between items-center">
+                  <span class="font-black text-slate-900">• ${i.name}</span>
+                  <span class="bg-brand-100 text-brand-800 text-xs px-2 py-0.5 rounded-lg border border-brand-200">${i.dosage}</span>
+                </div>
+              `).join('')}
             </div>
           </div>
         `;
@@ -502,31 +507,6 @@
       container.innerHTML = html;
     }
 
-    function toggleWeeklyDose(d, s) {
-      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      if (!window.appState.takenLogs[d]) window.appState.takenLogs[d] = {};
-      if (window.appState.takenLogs[d][s]) { delete window.appState.takenLogs[d][s]; }
-      else { window.appState.takenLogs[d][s] = time; }
-      saveOfflineState(); renderApp();
-    }
-
-    window.markSlotAsTaken = (id) => {
-      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      const today = getTodayStr();
-      if (!window.appState.takenLogs[today]) window.appState.takenLogs[today] = {};
-      window.appState.takenLogs[today][id] = time;
-      saveOfflineState(); renderApp(); showToast(`✅ 已記錄於 ${time} 服用！`);
-    };
-
-    window.switchView = (v) => {
-      window.currentView = v;
-      ['dayView', 'weekView', 'editView'].forEach(id => document.getElementById(id).classList.add('hidden'));
-      ['btnDayView', 'btnWeekView', 'btnEditView'].forEach(id => document.getElementById(id).className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300");
-      document.getElementById(v + 'View').classList.remove('hidden');
-      document.getElementById('btn' + v.charAt(0).toUpperCase() + v.slice(1) + 'View').className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm";
-      if (v === 'edit') renderEditor();
-    };
-
     function renderEditor() {
       const container = document.getElementById('editorSlotsContainer');
       container.innerHTML = window.appState.schedule.map((slot, sIdx) => `
@@ -539,17 +519,17 @@
             <input type="text" value="${slot.name}" class="slot-n h-14 border-2 rounded-xl px-4 font-black text-xl">
             <input type="text" value="${slot.time}" class="slot-t h-14 border-2 rounded-xl px-4 font-black text-xl">
           </div>
-          <textarea class="slot-d w-full h-24 border-2 rounded-xl p-4 font-bold text-lg">${slot.description}</textarea>
+          <textarea class="slot-d w-full h-24 border-2 rounded-xl p-4 font-bold text-lg leading-relaxed">${slot.description}</textarea>
           <div class="item-list space-y-4">
             ${slot.items.map((item, iIdx) => `
               <div class="bg-white p-5 rounded-2xl border-2 space-y-3 relative font-bold">
                 <button onclick="window.removeItem(${sIdx},${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black">✕</button>
                 <div class="grid grid-cols-2 gap-3">
-                  <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 text-lg font-black">
-                  <input type="text" value="${item.dosage}" class="i-dosage h-12 border-2 rounded-lg px-3 text-lg">
+                  <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 text-2xl font-black">
+                  <input type="text" value="${item.dosage}" class="i-dosage h-12 border-2 rounded-lg px-3 text-xl">
                 </div>
-                <textarea class="i-e w-full h-24 border-2 rounded-lg p-3 text-base" placeholder="主要效用">${item.effect}</textarea>
-                <textarea class="i-s w-full h-24 border-2 rounded-lg p-3 text-base text-rose-700" placeholder="注意事項/警語">${item.sideEffect}</textarea>
+                <textarea class="i-e w-full h-28 border-2 rounded-lg p-3 text-lg leading-relaxed" placeholder="主要效用">${item.effect}</textarea>
+                <textarea class="i-s w-full h-28 border-2 rounded-lg p-3 text-lg text-rose-700 leading-relaxed" placeholder="注意事項/警語">${item.sideEffect}</textarea>
               </div>
             `).join('')}
             <button onclick="window.addItem(${sIdx})" class="w-full h-12 bg-slate-200 rounded-xl font-black">+ 新增藥品</button>
@@ -582,7 +562,16 @@
       });
       window.appState.username = document.getElementById('editUsername').value;
       window.appState.schedule = schedule;
-      saveOfflineState(); showToast("💾 規劃已儲存！"); switchView('day');
+      saveOfflineState(); renderApp(); showToast("💾 規劃已儲存！"); switchView('day');
+    };
+
+    window.switchView = (v) => {
+      window.currentView = v;
+      ['dayView', 'weekView', 'editView'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['btnDayView', 'btnWeekView', 'btnEditView'].forEach(id => document.getElementById(id).className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all text-slate-300");
+      document.getElementById(v + 'View').classList.remove('hidden');
+      document.getElementById('btn' + v.charAt(0).toUpperCase() + v.slice(1) + 'View').className = "px-2 py-1 rounded font-black text-[11px] sm:text-xs transition-all bg-emerald-500 text-white shadow-sm";
+      if (v === 'edit') renderEditor();
     };
 
     function initClock() {
@@ -609,6 +598,20 @@
     window.addItem = (sIdx) => { window.appState.schedule[sIdx].items.push({ name: "新藥物", dosage: "1顆", effect: "", sideEffect: "" }); renderEditor(); };
     window.removeItem = (sIdx, iIdx) => { window.appState.schedule[sIdx].items.splice(iIdx, 1); renderEditor(); };
     window.removeSlot = (sIdx) => { window.appState.schedule.splice(sIdx, 1); renderEditor(); };
+    window.markSlotAsTaken = (id) => {
+      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      const today = getTodayStr();
+      if (!window.appState.takenLogs[today]) window.appState.takenLogs[today] = {};
+      window.appState.takenLogs[today][id] = time;
+      saveOfflineState(); renderApp(); showToast(`✅ 已記錄於 ${time} 服用！`);
+    };
+    window.toggleWeeklyDose = (d, s) => {
+      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      if (!window.appState.takenLogs[d]) window.appState.takenLogs[d] = {};
+      if (window.appState.takenLogs[d][s]) { delete window.appState.takenLogs[d][s]; }
+      else { window.appState.takenLogs[d][s] = time; }
+      saveOfflineState(); renderApp();
+    };
     window.requestResetWeeklyLogs = () => { if(confirm("確定重設本週打卡？")) { window.appState.takenLogs = {}; saveOfflineState(); renderApp(); showToast("🧹 紀錄已清空"); } };
   </script>
 </body>
