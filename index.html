@@ -26,7 +26,7 @@
     }
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=500;700;900&display=swap');
     
     :root {
       /* 老花眼友善的大尺寸基準字體 */
@@ -429,6 +429,11 @@
       document.getElementById('prevSlotTimeTag').textContent = prv.time;
       renderMedicationListDetailed('prevMedicationsList', prv.items);
 
+      // 計算與顯示前一階段至今已過去的時間
+      let elapsed = curM - prv.total;
+      if (elapsed < 0) elapsed += 1440;
+      document.getElementById('prevDoseElapsed').textContent = `已過去：${Math.floor(elapsed / 60)}小時 ${elapsed % 60}分`;
+
       document.getElementById('currentSlotName').textContent = cur.name;
       document.getElementById('currentSlotTimeTag').textContent = cur.time;
       renderMedicationListDetailed('currentMedicationsList', cur.items);
@@ -451,8 +456,10 @@
       document.getElementById('nextSlotTimeTag').textContent = nxt.time;
       renderMedicationListDetailed('nextMedicationsList', nxt.items);
 
+      // 計算與顯示下一階段預計還有時間
       let rem = nxt.total - curM; if (rem <= 0) rem += 1440;
       document.getElementById('nextDoseCountdown').textContent = `${Math.floor(rem/60)}小時 ${rem%60}分`;
+      document.getElementById('nextDoseTargetTime').textContent = `預計還有：${Math.floor(rem/60)}小時 ${rem%60}分`;
     }
 
     function renderDailyOverview() {
