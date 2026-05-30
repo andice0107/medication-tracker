@@ -232,12 +232,12 @@
         </div>
       </div>
 
-      <!-- 視圖3: 編輯設定 -->
+      <!-- 視圖3: 編輯設定 (引入藥物庫雙欄極速面板) -->
       <div id="editView" class="hidden bg-white rounded-3xl p-6 shadow-md border border-slate-100 space-y-8 w-full animate-fade">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-100 pb-5">
           <div>
-            <h2 class="fluid-title text-slate-950 font-black">⚙️ 正在編輯您的用藥規劃</h2>
-            <p class="text-base text-slate-500 mt-2 font-bold">在此可以完整修改每一項藥物的效用、注意事項與禁忌說明，並獨立設定各用餐前後時段。</p>
+            <h2 class="fluid-title text-slate-950 font-black">⚙️ 正在編輯您的用藥規劃與藥物庫</h2>
+            <p class="text-base text-slate-500 mt-2 font-bold">您可以在左側建置「藥物庫常用範本」，在右側時段中「一鍵選取加入」完成排程！</p>
           </div>
           <button type="button" onclick="window.requestLockSettings()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black px-6 py-4 rounded-2xl border-2 border-slate-300 shadow-sm transition-all flex items-center gap-2 text-xl">⬅️ 返回藥盒主頁</button>
         </div>
@@ -256,7 +256,39 @@
           </div>
         </div>
 
-        <div id="editorSlotsContainer" class="space-y-6 w-full"></div>
+        <!-- 雙欄配置：左側常用藥物庫，右側時段指派 -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <!-- 左側：藥物範本管理庫 -->
+          <div class="xl:col-span-1 space-y-6">
+            <div class="bg-emerald-50/50 border-2 border-emerald-200 rounded-3xl p-6 space-y-5">
+              <h3 class="text-xl font-black text-emerald-950 flex items-center gap-2">
+                <span>💊 常用藥物範本庫</span>
+              </h3>
+              <p class="text-sm text-slate-600 leading-relaxed font-bold">在此新增或修改藥物。建置完後，在右側排程中可一鍵點選直接帶入，免去重複打字！</p>
+              
+              <!-- 快捷新增藥物表單 -->
+              <div class="bg-white p-5 rounded-2xl border border-emerald-100 space-y-3 shadow-sm font-bold">
+                <span class="text-emerald-900 font-black text-base block">✨ 新增常用藥物至列表</span>
+                <input type="text" id="newLibName" class="w-full h-11 border-2 rounded-lg px-3 text-sm" placeholder="藥物/食品名稱 (如: 葉黃素)">
+                <input type="text" id="newLibDosage" class="w-full h-11 border-2 rounded-lg px-3 text-sm" placeholder="建議劑量 (如: 1 顆)">
+                <textarea id="newLibEffect" class="w-full h-20 border-2 rounded-lg p-3 text-sm leading-relaxed" placeholder="主要效用與作用描述..."></textarea>
+                <textarea id="newLibSide" class="w-full h-20 border-2 rounded-lg p-3 text-sm leading-relaxed text-rose-800 border-rose-100 bg-rose-50/50" placeholder="注意事項、警語或飲食禁忌..."></textarea>
+                <button type="button" onclick="window.addDrugToLibrary()" class="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl transition-all shadow-md">＋ 儲存至常用範本列表</button>
+              </div>
+
+              <!-- 藥物庫範本條目列表 -->
+              <div id="libraryItemsContainer" class="space-y-4 max-h-[600px] overflow-y-auto pr-1 no-scrollbar"></div>
+            </div>
+          </div>
+
+          <!-- 右側：時段與排程指派 -->
+          <div class="xl:col-span-2 space-y-6">
+            <div class="bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 space-y-6">
+              <h3 class="text-xl font-black text-slate-950">⏰ 時段用藥日程編輯</h3>
+              <div id="editorSlotsContainer" class="space-y-6 w-full"></div>
+            </div>
+          </div>
+        </div>
 
         <div class="pt-8 border-t-2 border-slate-100 flex gap-4">
           <button type="button" onclick="window.requestLockSettings()" class="flex-1 h-18 rounded-2xl font-black text-slate-500 hover:bg-slate-100 text-xl border-2 border-slate-200">取消並返回</button>
@@ -264,6 +296,36 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- 用藥安全預覽對話框 (Modal 預覽工具) -->
+  <div id="previewModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 space-y-6 shadow-2xl border-4 border-brand-500 overflow-y-auto max-h-[90vh] transition-all transform scale-100 animate-fade">
+      <div class="flex justify-between items-start border-b border-slate-200 pb-4">
+        <div>
+          <span class="bg-brand-100 text-brand-800 text-sm font-black px-3.5 py-1 rounded-full inline-block mb-1.5">💊 頤寧安全用藥預覽</span>
+          <h3 class="fluid-title text-slate-950 font-black" id="previewDrugName">藥物名稱</h3>
+        </div>
+        <button type="button" onclick="window.closePreviewModal()" class="text-slate-400 hover:text-slate-600 font-black text-3xl p-1 leading-none">✕</button>
+      </div>
+      <div class="space-y-4">
+        <div class="p-4 bg-brand-50 rounded-2xl border-2 border-brand-100">
+          <h4 class="text-brand-900 font-black text-lg mb-1">📋 建議服用劑量</h4>
+          <p class="fluid-subtitle text-slate-950 font-black" id="previewDrugDosage">--</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <h4 class="text-slate-800 font-black text-lg mb-1.5">💡 藥物主要效能與生理作用</h4>
+          <p class="fluid-body text-slate-950 font-bold leading-relaxed" id="previewDrugEffect">--</p>
+        </div>
+        <div class="p-4 bg-rose-50 rounded-2xl border-2 border-rose-200">
+          <h4 class="text-rose-950 font-black text-lg mb-1.5">⚠️ 臨床注意事項、警語與飲食安全禁忌</h4>
+          <p class="fluid-body text-rose-800 font-bold leading-relaxed" id="previewDrugSideEffect">--</p>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-slate-200 flex justify-end">
+        <button type="button" onclick="window.closePreviewModal()" class="bg-brand-800 hover:bg-brand-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-lg">關閉預覽視窗</button>
+      </div>
+    </div>
   </div>
 
   <div class="fixed bottom-8 right-6 flex flex-col gap-3 z-50">
@@ -281,46 +343,89 @@
   </div>
 
   <script>
+    // 預先建置全局最詳盡的藥物庫範本列表
+    const defaultDrugTemplates = [
+      {
+        id: "lib-b", name: "維他命 B 群", dosage: "1 顆",
+        effect: "提供整天工作所需的活力，輔助能量正常代謝，維持神經系統與大腦正常功能運作。隨餐或飯後吃，吸收效果最佳。",
+        sideEffect: "尿液變黃為正常現象，此係因體內代謝排出多餘的核黃素（維生素 B2）所致，多補充水分即可。"
+      },
+      {
+        id: "lib-l", name: "葉黃素", dosage: "1 顆",
+        effect: "精準高抗氧化活性，集中保養視網膜與黃斑部。極度依賴食物中的油脂來帶動小腸內絨毛的主動吸收，故必須於飯後30分鐘內服用以達黃金吸收率。",
+        sideEffect: "需要每日規律穩定服用。累積通常需持續達 3 至 6 個月，視網膜才能達到最佳保護濃度。多食無益，每日請勿攝入超過30毫克，過量補充容易導致手掌腳掌皮膚泛黃。"
+      },
+      {
+        id: "lib-f", name: "魚油", dosage: "2 顆",
+        effect: "富含高純度 Omega-3 多元不飽和脂肪酸（EPA、DHA），支持心血管健康、促進體內抗發炎機制。同樣極度依賴食物中的油脂帶動吸收，故必須於飯後30分鐘內服用。",
+        sideEffect: "重要安全警告：請避免與鈣片同時服用，以免產生皂化反應（鈣離子與脂肪酸結合）形成不易溶解的油脂結晶，大幅降低兩者在人體腸胃道的吸收率。若您有安排手術、服用阿斯匹靈等抗凝血藥物，請先諮詢主治醫師指示。"
+      },
+      {
+        id: "lib-p1", name: "骨科止痛消炎藥", dosage: "1 顆",
+        effect: "屬於非類固醇消炎止痛藥 (NSAIDs)，能精準且迅速緩解足跟骨刺所引發的局部關節發炎、紅腫與神經刺痛。本品屬於「症狀緩解藥物」，未感疼痛時可不服用。",
+        sideEffect: "絕對必須飯後服用，不可空腹，以免傷害胃部黏膜。服用期間嚴禁飲酒，酒精會加劇消炎藥對胃壁的刺激，大幅升高胃黏膜出血及潰瘍風險。"
+      },
+      {
+        id: "lib-m1", name: "肌肉鬆弛劑", dosage: "1 顆",
+        effect: "放鬆骨骼與周邊肌肉強直，能高度有效舒緩因站立、走動過久引發的足跟周邊緊繃、肌肉痙攣與白天累積的僵硬酸痛。",
+        sideEffect: "可能產生頭暈、中樞性嗜睡、全身無力或口乾等副作用。若服用後需開車、騎車或操作精密機械請特別留意。服用期間請勿飲酒，酒精會與本藥產生協同作用，導致嚴重嗜睡、呼吸抑制或步態不穩。"
+      },
+      {
+        id: "lib-h1", name: "高血壓藥", dosage: "1 顆",
+        effect: "穩定血管張力，平穩血壓。依照醫囑固定於晚餐後服用，以預防控制夜間至隔天清晨（心腦血管併發症發生率最高峰）的血壓攀升。",
+        sideEffect: "絕對禁止食用「葡萄柚」、「香柚」或其加工果汁！柚類成分會強烈抑制肝臟及小腸中的代謝酵素 (CYP3A4)，使降血壓藥在血液中的藥物濃度飆升，引發致命性低血壓、心跳過快或頭暈。若您的血壓藥含保鉀型利尿劑，亦請避免使用「低鈉鹽」，以免導致體內高血鉀症及嚴重肌肉痙攣或心律不整。"
+      },
+      {
+        id: "lib-l1", name: "維康肝藥", dosage: "1 顆",
+        effect: "主要活性成分為Silymarin（水飛薊素），具強效抗氧化功效，能穩定肝細胞膜結構、促進肝臟細胞修復並增強解毒能力。屬於脂溶性成分，隨晚餐隨餐或飯後服用能大幅提升吸收率。",
+        sideEffect: "建議隨晚餐隨餐服用能大幅提升吸收率。極少數人在服用初期可能出現輕微胃腸道不適、軟便或輕微拉肚子。"
+      },
+      {
+        id: "lib-t1", name: "妥寧 (降血脂藥)", dosage: "半 顆",
+        effect: "長效型降血脂藥物(Atorvastatin)。固定服用可精準抑制深夜肝臟合成膽固醇的高峰期，能極佳控制膽固醇水平。",
+        sideEffect: "不受空腹或飯後限制。安全警語：服用後若出現不明原因的肌肉疼痛、抽筋、觸痛或全身無力，甚至伴隨茶色尿液，請立即停藥並盡速就醫，以排除橫紋肌溶解症。絕對禁止與葡萄柚併用。"
+      },
+      {
+        id: "lib-c1", name: "鈣片", dosage: "1 顆",
+        effect: "補充足量鈣質，利用夜間身體靜止、胃腸蠕動減緩時的黃金時間吸收。鈣離子具穩定神經、放鬆骨骼與肌肉組織及助眠效果。能與早晨的魚油達成完美的時間區隔，完全避開交互作用。",
+        sideEffect: "與早晨魚油（08:30）間隔10小時以上，避開皂化反應，確保兩者完美吸收。服用後若有便秘或脹氣，建議隨餐服用多喝水，或諮詢醫師改用吸收率更佳的有機鈣（如檸檬酸鈣）。"
+      }
+    ];
+
     const defaultSchedule = [
       {
         id: "slot-3vbx7brcf", name: "早餐", time: "08:30", mealTiming: "after",
         description: "建議隨餐或飯後30分鐘內。此時段集中處理白天所需的營養素，工作前服用即可完成，避免干擾日間工作。",
         items: [
-          { id: "item-b", name: "維他命 B 群", type: "supplement", dosage: "1 顆", effect: "提供整天工作所需的活力，若含有脂溶性營養素或合併配方，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
-          { id: "item-l", name: "葉黃素", type: "supplement", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。極度依賴食物中的油脂來帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
-          { id: "item-f", name: "魚油", type: "supplement", dosage: "2 顆", effect: "脂溶性 Omega-3，保護心血管。極度依賴食物中的油脂帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "重要：請避免與鈣片同時服用，以免產生皂化反應降低吸收率。" }
+          { id: "item-b", name: "維他命 B 群", dosage: "1 顆", effect: "提供整天工作所需的活力，若含有脂溶性營養素或合併配方，隨餐或飯後吃吸收效果最佳。", sideEffect: "尿液變黃為正常現象。" },
+          { id: "item-l", name: "葉黃素", dosage: "1 顆", effect: "脂溶性營養素，保養視網膜與黃斑部。極度依賴食物中的油脂來帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "需長期每日穩定服用。" },
+          { id: "item-f", name: "魚油", dosage: "2 顆", effect: "脂溶性 Omega-3，保護心血管。極度依賴食物中的油脂帶動吸收，故必須於飯後30分鐘內服用。", sideEffect: "重要：請避免與鈣片同時服用，以免產生皂化反應降低吸收率。" }
         ]
       },
       {
         id: "slot-vyiblho7v", name: "中餐", time: "12:30", mealTiming: "after",
         description: "建議隨餐或飯後30分鐘內。非類固醇消炎止痛藥 (NSAIDs) 對胃黏膜刺激性較大，絕對必須飯後服用，不可空腹。",
         items: [
-          { id: "item-p1", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。絕對必須飯後服用，不可空腹，以免傷胃。", sideEffect: "絕對必須飯後服用，不可空腹，以免傷胃。" },
-          { id: "item-m1", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "放鬆足部肌肉，有效緩解白天因走動引發的足跟疼痛。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，若開車或操作機械請特別留意安全。" }
+          { id: "item-p1", name: "骨科止痛消炎藥", dosage: "1 顆", effect: "緩解足跟骨刺疼痛與消炎（NSAIDs類藥物）。絕對必須飯後服用，不可空腹，以免傷胃。", sideEffect: "絕對必須飯後服用，不可空腹，以免傷胃。" },
+          { id: "item-m1", name: "肌肉鬆弛劑", dosage: "1 顆", effect: "放鬆足部肌肉，有效緩解白天因走動引發的足跟疼痛。", sideEffect: "可能產生頭暈、嗜睡或無力等副作用，若開車或操作機械請特別留意安全。" }
         ]
       },
       {
         id: "slot-j9brkk69g", name: "晚餐", time: "18:30", mealTiming: "after",
-        description: "建議隨餐或飯後30分鐘內。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。",
+        description: "建議隨餐或飯後30分鐘內。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。合併原睡前用藥以簡化流程並提高服藥順從性。",
         items: [
-          { id: "item-h1", name: "高血壓藥", type: "medicine", dosage: "1 顆", effect: "控制並維持血壓穩定。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素引發低血壓風險。若包含保鉀型利尿劑，避免使用含氯化鉀之低鈉鹽以免高血鉀。", sideEffect: "絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素導致血壓藥濃度過高引發危險。避免使用低鈉鹽以免體內鉀離子過高。" },
-          { id: "item-l1", name: "維康肝藥", type: "supplement", dosage: "1 顆", effect: "主要成分為水飛薊素 (Silymarin)，屬於脂溶性成分，隨晚餐隨餐服用能大幅提升吸收率。", sideEffect: "隨晚餐隨餐服用能大幅提升吸收率。" }
-        ]
-      },
-      {
-        id: "slot-kj98ovr7n", name: "睡前", time: "22:00", mealTiming: "none",
-        description: "就寢前30分鐘。妥寧不受空腹限制。鈣片利用身體靜止吸收、助眠並與魚油區隔。",
-        items: [
-          { id: "item-t1", name: "妥寧 (降血脂藥)", type: "medicine", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。固定於睡前服用可精準抑制深夜肝臟合成膽固醇的高峰期，且可避開日間忙碌防漏藥。", sideEffect: "不受空腹或飯後限制，睡前服可避開日間忙碌時段以防漏藥。" },
-          { id: "item-c1", name: "鈣片", type: "supplement", dosage: "1 顆", effect: "利用夜間身體靜止吸收。鈣離子具穩定神經、放鬆肌肉與助眠效果。與早晨魚油間隔12小時以上可避免產生皂化反應。", sideEffect: "與早晨魚油間隔12小時以上，完全避免產生皂化反應，確保兩者完美吸收。" }
+          { id: "item-h1", name: "高血壓藥", dosage: "1 顆", effect: "控制並維持血壓穩定。依照醫囑固定於晚餐後服用，以維持夜間及清晨血壓穩定。絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素引發低血壓風險。若包含保鉀型利尿劑，避免使用含氯化鉀之低鈉鹽以免高血鉀。", sideEffect: "絕對禁止食用「葡萄柚」與「香柚」！柚類成分會抑制代謝酵素導致血壓藥濃度過高引發危險。避免使用低鈉鹽以免體內鉀離子過高。" },
+          { id: "item-l1", name: "維康肝藥", dosage: "1 顆", effect: "主要成分為水飛薊素 (Silymarin)，屬於脂溶性成分，隨晚餐隨餐服用能大幅提升吸收率。", sideEffect: "隨晚餐隨餐服用能大幅提升吸收率。" },
+          { id: "item-t1", name: "妥寧 (降血脂藥)", dosage: "半 顆", effect: "長效型降血脂藥物(Atorvastatin)。原本規劃於睡前，為簡化流程移至晚餐後服用，仍能穩定控制深夜膽固醇合成高峰期。", sideEffect: "移至晚餐後服用，與晚餐其他藥物合併一次完成，防漏藥。" },
+          { id: "item-c1", name: "鈣片", dosage: "1 顆", effect: "幫助骨骼與神經放鬆。移至晚餐後服用，與早晨魚油間隔約10小時，仍能有效避免皂化反應並維持良好吸收率。", sideEffect: "與早餐魚油（08:30）間隔10小時，避開皂化反應，確保兩者完美吸收。" }
         ]
       },
       {
         id: "slot-n64cn82j1", name: "骨科備用藥", time: "隨時", mealTiming: "none",
         description: "若夜間因足跟骨刺疼痛難耐影響睡眠時使用。消炎止痛藥切勿完全空腹服用。",
         items: [
-          { id: "item-p2", name: "骨科止痛消炎藥", type: "medicine-prn", dosage: "1 顆", effect: "緩解足跟發炎與刺痛（NSAIDs）。非感疼痛時不需服用。服用期間請勿飲酒，以免加重對胃黏膜傷害。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾或少量牛奶。請勿飲酒。" },
-          { id: "item-m2", name: "肌肉鬆弛劑", type: "medicine-prn", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用在此時段有助於改善因痛失眠。服用期間請勿飲酒。", sideEffect: "帶來的嗜睡副作用在此時段有助於改善因痛失眠。請勿飲酒。" }
+          { id: "item-p2", name: "骨科止痛消炎藥", dosage: "1 顆", effect: "緩解足跟發炎與刺痛（NSAIDs）。非感疼痛時不需服用. 服用期間請勿飲酒，以免加重對胃黏膜傷害。", sideEffect: "切勿完全空腹服用，建議配幾口小餅乾 or 少量牛奶。請勿飲酒。" },
+          { id: "item-m2", name: "肌肉鬆弛劑", dosage: "1 顆", effect: "改善局部肌肉痙攣。帶來的嗜睡副作用在此時段有助於改善因痛失眠。服用期間請勿飲酒。", sideEffect: "帶來的嗜睡副作用在此時段有助於改善因痛失眠。請勿飲酒。" }
         ]
       }
     ];
@@ -328,6 +433,7 @@
     window.appState = {
       username: "戴漢彬",
       schedule: JSON.parse(JSON.stringify(defaultSchedule)),
+      drugLibrary: JSON.parse(JSON.stringify(defaultDrugTemplates)),
       takenLogs: {}, zoom: 1.0
     };
 
@@ -363,21 +469,24 @@
       if (saved) {
         try {
           const loaded = JSON.parse(saved);
-          if (loaded && loaded.schedule) {
+          if (loaded) {
             window.appState.username = loaded.username || "戴漢彬";
-            window.appState.schedule = loaded.schedule.map(s => {
-              // 舊版本相容：若無 mealTiming 屬性，則自動從舊命名抽取餐期
-              if (s.mealTiming === undefined) {
-                if (s.name.includes("飯後") || s.name.includes("餐後")) s.mealTiming = "after";
-                else if (s.name.includes("飯前") || s.name.includes("餐前")) s.mealTiming = "before";
-                else s.mealTiming = "none";
-              }
-              // 移除多餘字樣使名稱乾淨 (例如 "早餐後" -> "早餐")
-              if (s.name === "早餐後") s.name = "早餐";
-              if (s.name === "午餐後" || s.name === "中餐後") s.name = "中餐";
-              if (s.name === "晚餐後") s.name = "晚餐";
-              return s;
-            });
+            if (loaded.schedule) {
+              window.appState.schedule = loaded.schedule.map(s => {
+                if (s.mealTiming === undefined) {
+                  if (s.name.includes("飯後") || s.name.includes("餐後")) s.mealTiming = "after";
+                  else if (s.name.includes("飯前") || s.name.includes("餐前")) s.mealTiming = "before";
+                  else s.mealTiming = "none";
+                }
+                if (s.name === "早餐後") s.name = "早餐";
+                if (s.name === "午餐後" || s.name === "中餐後") s.name = "中餐";
+                if (s.name === "晚餐後") s.name = "晚餐";
+                return s;
+              });
+            }
+            if (loaded.drugLibrary) {
+              window.appState.drugLibrary = loaded.drugLibrary;
+            }
             window.appState.takenLogs = loaded.takenLogs || {};
           }
         } catch (e) {}
@@ -388,6 +497,7 @@
       localStorage.setItem('yining_med_v7_full', JSON.stringify({
         username: window.appState.username,
         schedule: window.appState.schedule,
+        drugLibrary: window.appState.drugLibrary,
         takenLogs: window.appState.takenLogs
       }));
     }
@@ -405,7 +515,158 @@
       calculateTimesAndReminders();
     }
 
-    // 渲染詳細藥品列表，提供獨立單顆藥物標記按鍵
+    // 詳情預覽工具 Modal 控制
+    window.openPreviewModal = (name, dosage, effect, sideEffect) => {
+      document.getElementById('previewDrugName').textContent = name;
+      document.getElementById('previewDrugDosage').textContent = dosage || "未設定";
+      document.getElementById('previewDrugEffect').textContent = effect || "暫無主要效能資料。";
+      document.getElementById('previewDrugSideEffect').textContent = sideEffect || "暫無注意事項。";
+      
+      const modal = document.getElementById('previewModal');
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closePreviewModal = () => {
+      document.getElementById('previewModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+
+    // 常用藥物範本庫的動態增刪改
+    window.addDrugToLibrary = () => {
+      const name = document.getElementById('newLibName').value.trim();
+      const dosage = document.getElementById('newLibDosage').value.trim();
+      const effect = document.getElementById('newLibEffect').value.trim();
+      const side = document.getElementById('newLibSide').value.trim();
+
+      if (!name) {
+        showToast("⚠️ 藥物名稱為必填項");
+        return;
+      }
+
+      const isDuplicate = window.appState.drugLibrary.some(item => item.name === name);
+      if (isDuplicate) {
+        if (!confirm(`範本庫中已有同名的「${name}」，要覆蓋更新它嗎？`)) return;
+        window.appState.drugLibrary = window.appState.drugLibrary.map(item => {
+          if (item.name === name) {
+            return { ...item, dosage, effect, sideEffect: side };
+          }
+          return item;
+        });
+        showToast("💾 範本已成功覆蓋更新！");
+      } else {
+        window.appState.drugLibrary.push({
+          id: 'lib-' + Math.random().toString(36).substr(2, 9),
+          name, dosage, effect, sideEffect: side
+        });
+        showToast("✅ 已成功加入範本列表！");
+      }
+
+      document.getElementById('newLibName').value = "";
+      document.getElementById('newLibDosage').value = "";
+      document.getElementById('newLibEffect').value = "";
+      document.getElementById('newLibSide').value = "";
+
+      saveOfflineState();
+      renderLibraryItems();
+      renderEditor(); // 更新右側時段中的下拉式選單內容
+    };
+
+    window.deleteLibraryItem = (id, name) => {
+      if (confirm(`確定要將「${name}」從常用範本庫中移除嗎？這不會刪除已安排在時段中的藥項。`)) {
+        window.appState.drugLibrary = window.appState.drugLibrary.filter(item => item.id !== id);
+        saveOfflineState();
+        renderLibraryItems();
+        renderEditor();
+      }
+    };
+
+    // 一鍵保存某個時段中修改過的藥品至全局藥物範本庫
+    window.saveSlotItemToLibrary = (sIdx, iIdx) => {
+      const item = window.appState.schedule[sIdx].items[iIdx];
+      if (!item.name) {
+        showToast("⚠️ 藥物名稱不能為空");
+        return;
+      }
+      
+      const exists = window.appState.drugLibrary.find(l => l.name === item.name);
+      if (exists) {
+        if (!confirm(`常用範本庫已存在「${item.name}」，是否要用此處的「劑量、效用、注意事項」覆蓋更新它？`)) return;
+        exists.dosage = item.dosage;
+        exists.effect = item.effect;
+        exists.sideEffect = item.sideEffect;
+        showToast(`💾 已成功覆蓋範本庫中的「${item.name}」！`);
+      } else {
+        window.appState.drugLibrary.push({
+          id: 'lib-' + Math.random().toString(36).substr(2, 9),
+          name: item.name,
+          dosage: item.dosage,
+          effect: item.effect,
+          sideEffect: item.sideEffect
+        });
+        showToast(`✅ 已成功將「${item.name}」儲存至常用範本庫！`);
+      }
+      saveOfflineState();
+      renderLibraryItems();
+      renderEditor();
+    };
+
+    // 一鍵將範本庫的藥物克隆指派加入特定時段
+    window.quickAddFromLibrary = (selectEl, sIdx) => {
+      const libId = selectEl.value;
+      if (!libId) return;
+
+      const libItem = window.appState.drugLibrary.find(item => item.id === libId);
+      if (libItem) {
+        window.appState.schedule[sIdx].items.push({
+          id: 'item-' + Math.random().toString(36).substr(2, 9),
+          name: libItem.name,
+          dosage: libItem.dosage,
+          effect: libItem.effect,
+          sideEffect: libItem.sideEffect
+        });
+        showToast(`⚡ 已成功套用並指派「${libItem.name}」！`);
+        renderEditor();
+      }
+      selectEl.value = ""; // 重設選取狀態
+    };
+
+    // 渲染常用藥物庫條目 (帶預覽、刪除、及卡片樣式)
+    function renderLibraryItems() {
+      const container = document.getElementById('libraryItemsContainer');
+      if (!container) return;
+
+      if (window.appState.drugLibrary.length === 0) {
+        container.innerHTML = `<p class="text-center text-slate-400 font-bold py-6">常用庫暫無資料</p>`;
+        return;
+      }
+
+      container.innerHTML = window.appState.drugLibrary.map(item => {
+        // 安全處理引號，防止行內點擊時 JavaScript 發生語法解析錯誤
+        const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeDosage = item.dosage ? item.dosage.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        const safeEffect = item.effect ? item.effect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        const safeSide = item.sideEffect ? item.sideEffect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+
+        return `
+          <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex flex-col justify-between gap-3 font-bold">
+            <div class="flex justify-between items-start gap-1">
+              <div>
+                <span class="text-base text-slate-900 font-black">${item.name}</span>
+                <span class="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg ml-2 font-black">${item.dosage || '未設劑量'}</span>
+              </div>
+              <button type="button" onclick="window.deleteLibraryItem('${item.id}', '${safeName}')" class="text-rose-500 text-sm hover:text-rose-700 font-black">✕ 刪除</button>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" onclick="window.openPreviewModal('${safeName}', '${safeDosage}', '${safeEffect}', '${safeSide}')" class="flex-1 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs rounded-xl font-black transition-all">🔍 詳情預覽</button>
+              <button type="button" onclick="document.getElementById('newLibName').value='${safeName}'; document.getElementById('newLibDosage').value='${safeDosage}'; document.getElementById('newLibEffect').value='${safeEffect}'; document.getElementById('newLibSide').value='${safeSide}'; showToast('✍️ 已將範本載入上方編輯欄！')" class="flex-grow bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs rounded-xl font-black transition-all">✍️ 載入編輯</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 渲染詳細藥品列表，一日版畫面
     function renderMedicationListDetailed(id, items, slotId) {
       const el = document.getElementById(id); if (!el) return;
       if (!items || items.length === 0) { el.innerHTML = `<div class="text-slate-400 font-bold text-center py-4">無安排</div>`; return; }
@@ -416,6 +677,12 @@
         const itemKey = `${slotId}_${item.id}`;
         const isItemTaken = window.appState.takenLogs[today]?.[itemKey];
         
+        // 安全處理
+        const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeDosage = item.dosage ? item.dosage.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        const safeEffect = item.effect ? item.effect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        const safeSide = item.sideEffect ? item.sideEffect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+
         html += `
           <div class="bg-white p-5 rounded-3xl border-2 ${isItemTaken ? 'border-emerald-500 bg-emerald-50/10' : 'border-slate-300'} shadow-sm space-y-4 relative overflow-hidden transition-all duration-200">
             ${isItemTaken ? `
@@ -434,8 +701,9 @@
                 <strong class="text-rose-950 font-black">【⚠️ 注意】：</strong>${item.sideEffect}
               </div>` : ''}
             
-            <div class="pt-2">
-              <button type="button" onclick="window.toggleItemTaken('${slotId}', '${item.id}')" class="w-full h-12 rounded-2xl font-black transition-all border-2 text-base flex items-center justify-center gap-2 ${isItemTaken ? 'bg-emerald-100 border-emerald-400 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'}">
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button type="button" onclick="window.openPreviewModal('${safeName}', '${safeDosage}', '${safeEffect}', '${safeSide}')" class="h-12 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl font-black text-base transition-all">🔍 詳情預覽</button>
+              <button type="button" onclick="window.toggleItemTaken('${slotId}', '${item.id}')" class="h-12 rounded-2xl font-black transition-all border-2 text-base flex items-center justify-center gap-2 ${isItemTaken ? 'bg-emerald-100 border-emerald-400 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'}">
                 ${isItemTaken ? '✓ 取消單項標記' : '💊 單項已服確認'}
               </button>
             </div>
@@ -659,24 +927,29 @@
     }
 
     function renderEditor() {
+      // 常用藥物庫選單選項產生
+      const selectOptionsHtml = window.appState.drugLibrary.map(lib => `
+        <option value="${lib.id}">${lib.name} (${lib.dosage || '無劑量'})</option>
+      `).join('');
+
       const container = document.getElementById('editorSlotsContainer');
       container.innerHTML = window.appState.schedule.map((slot, sIdx) => `
-        <div class="editor-slot bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 space-y-4" data-slot-id="${slot.id}">
-          <div class="flex justify-between font-black text-brand-800">
-            <span class="fluid-subtitle">時段與餐期編輯：${slot.name}</span>
-            <button onclick="window.removeSlot(${sIdx})" class="text-rose-500 text-sm">✕ 刪除時段</button>
+        <div class="editor-slot bg-white border-2 border-slate-200 rounded-3xl p-6 space-y-4" data-slot-id="${slot.id}">
+          <div class="flex justify-between font-black text-brand-800 border-b pb-2">
+            <span class="fluid-subtitle">時段編輯：${slot.name} (${slot.time})</span>
+            <button onclick="window.removeSlot(${sIdx})" class="text-rose-500 text-sm font-black hover:underline">✕ 刪除時段</button>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="flex flex-col">
-              <label class="block text-sm text-slate-500 mb-1 font-black">時段名稱 (三餐可獨立編輯)</label>
+              <label class="block text-sm text-slate-500 mb-1 font-black">時段名稱</label>
               <input type="text" value="${slot.name}" class="slot-n h-14 border-2 rounded-xl px-4 font-black text-xl">
             </div>
             <div class="flex flex-col">
-              <label class="block text-sm text-slate-500 mb-1 font-black">設定時間點</label>
+              <label class="block text-sm text-slate-500 mb-1 font-black">設定時間點 (格式如 08:30)</label>
               <input type="text" value="${slot.time}" class="slot-t h-14 border-2 rounded-xl px-4 font-black text-xl">
             </div>
             <div class="flex flex-col">
-              <label class="block text-sm text-slate-500 mb-1 font-black">用餐時間關聯 (餐前 / 餐後)</label>
+              <label class="block text-sm text-slate-500 mb-1 font-black">用餐前後關聯</label>
               <select class="slot-meal-timing h-14 border-2 rounded-xl px-4 font-black text-xl bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500">
                 <option value="none" ${slot.mealTiming === 'none' ? 'selected' : ''}>不限制 (或睡前/隨時)</option>
                 <option value="before" ${slot.mealTiming === 'before' ? 'selected' : ''}>餐前 (飯前30分鐘)</option>
@@ -685,33 +958,79 @@
             </div>
           </div>
           <div class="flex flex-col">
-            <label class="block text-sm text-slate-500 mb-1 font-black">時段描述</label>
+            <label class="block text-sm text-slate-500 mb-1 font-black">時段描述說明</label>
             <textarea class="slot-d w-full h-20 border-2 rounded-xl p-4 font-bold text-lg leading-relaxed">${slot.description}</textarea>
           </div>
-          <div class="item-list space-y-4">
-            ${slot.items.map((item, iIdx) => `
-              <div class="bg-white p-5 rounded-2xl border-2 space-y-3 relative font-bold" data-item-id="${item.id}">
-                <button onclick="window.removeItem(${sIdx},${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black">✕</button>
-                <div class="grid grid-cols-2 gap-3">
-                  <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 text-2xl font-black" placeholder="藥物名稱">
-                  <input type="text" value="${item.dosage}" class="i-dosage h-12 border-2 rounded-lg px-3 text-xl" placeholder="劑量">
+          
+          <div class="item-list space-y-4 pt-4 border-t border-dashed border-slate-200">
+            <span class="fluid-body font-black text-slate-900 block">📦 時段安排藥品：</span>
+            
+            ${slot.items.map((item, iIdx) => {
+              // 安全轉義
+              const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              const safeDosage = item.dosage ? item.dosage.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+              const safeEffect = item.effect ? item.effect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+              const safeSide = item.sideEffect ? item.sideEffect.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+
+              return `
+                <div class="bg-slate-50 p-5 rounded-2xl border-2 space-y-3 relative font-bold" data-item-id="${item.id}">
+                  <button onclick="window.removeItem(${sIdx},${iIdx})" class="absolute top-2 right-2 text-rose-500 font-black text-xl" title="移除此藥品">✕</button>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="flex flex-col">
+                      <label class="text-xs text-slate-400 mb-1">藥物名稱</label>
+                      <input type="text" value="${item.name}" class="i-n h-12 border-2 rounded-lg px-3 text-2xl font-black" placeholder="藥物名稱">
+                    </div>
+                    <div class="flex flex-col">
+                      <label class="text-xs text-slate-400 mb-1">劑量</label>
+                      <input type="text" value="${item.dosage}" class="i-dosage h-12 border-2 rounded-lg px-3 text-xl" placeholder="劑量">
+                    </div>
+                  </div>
+                  <div class="flex flex-col">
+                    <label class="text-xs text-slate-400 mb-1">主要效能作用</label>
+                    <textarea class="i-e w-full h-16 border-2 rounded-lg p-3 text-lg leading-relaxed" placeholder="主要效用">${item.effect}</textarea>
+                  </div>
+                  <div class="flex flex-col">
+                    <label class="text-xs text-slate-400 mb-1 text-rose-700">注意事項與禁忌警語</label>
+                    <textarea class="i-s w-full h-16 border-2 rounded-lg p-3 text-lg text-rose-700 leading-relaxed" placeholder="注意事項/警語">${item.sideEffect}</textarea>
+                  </div>
+                  
+                  <div class="flex flex-wrap gap-2 pt-1.5">
+                    <button type="button" onclick="window.openPreviewModal('${safeName}', '${safeDosage}', '${safeEffect}', '${safeSide}')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs px-4 py-2 rounded-lg font-black transition-all">🔍 預覽安全指引</button>
+                    <button type="button" onclick="window.saveSlotItemToLibrary(${sIdx}, ${iIdx})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs px-4 py-2 rounded-lg font-black border border-emerald-200 transition-all">💾 存入常用藥物庫</button>
+                  </div>
                 </div>
-                <textarea class="i-e w-full h-24 border-2 rounded-lg p-3 text-lg leading-relaxed" placeholder="主要效用">${item.effect}</textarea>
-                <textarea class="i-s w-full h-24 border-2 rounded-lg p-3 text-lg text-rose-700 leading-relaxed" placeholder="注意事項/警語">${item.sideEffect}</textarea>
+              `;
+            }).join('')}
+            
+            <!-- 極速新增組合工具欄 -->
+            <div class="bg-emerald-50/50 p-4 rounded-2xl border-2 border-emerald-100 flex flex-col md:flex-row gap-3">
+              <div class="flex-grow flex flex-col">
+                <label class="text-xs text-emerald-800 font-black mb-1">⚡ 從常用藥物庫快速挑選帶入：</label>
+                <select class="quick-add-select h-12 border-2 rounded-xl px-3 font-black text-base bg-white" onchange="window.quickAddFromLibrary(this, ${sIdx})">
+                  <option value="">-- 點此展開常用藥物範本庫 --</option>
+                  ${selectOptionsHtml}
+                </select>
               </div>
-            `).join('')}
-            <button onclick="window.addItem(${sIdx})" class="w-full h-12 bg-slate-200 rounded-xl font-black">+ 新增藥品</button>
+              <div class="flex items-end shrink-0">
+                <button type="button" onclick="window.addItem(${sIdx})" class="w-full md:w-auto h-12 bg-white hover:bg-slate-100 text-slate-800 border-2 rounded-xl px-6 font-black text-base transition-all flex items-center justify-center gap-1">
+                  ＋ 手動新增空白藥項
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       `).join('');
+
       document.getElementById('editUsername').value = window.appState.username;
+      renderLibraryItems();
     }
 
     window.saveEditorConfig = function() {
       const schedule = [];
       document.querySelectorAll('.editor-slot').forEach(s => {
         const items = [];
-        s.querySelectorAll('.bg-white.p-5').forEach(i => {
+        s.querySelectorAll('.bg-slate-50').forEach(i => {
           items.push({
             id: i.getAttribute('data-item-id') || ('item-' + Math.random()),
             name: i.querySelector('.i-n').value,
@@ -778,7 +1097,7 @@
     };
     
     window.requestLockSettings = () => switchView('day');
-    window.addItem = (sIdx) => { window.appState.schedule[sIdx].items.push({ id: 'item-' + Math.random(), name: "新藥物", dosage: "1顆", effect: "", sideEffect: "" }); renderEditor(); };
+    window.addItem = (sIdx) => { window.appState.schedule[sIdx].items.push({ id: 'item-' + Math.random().toString(36).substr(2, 9), name: "新藥物", dosage: "1顆", effect: "", sideEffect: "" }); renderEditor(); };
     window.removeItem = (sIdx, iIdx) => { window.appState.schedule[sIdx].items.splice(iIdx, 1); renderEditor(); };
     window.removeSlot = (sIdx) => { window.appState.schedule.splice(sIdx, 1); renderEditor(); };
     
